@@ -6411,21 +6411,21 @@ namespace Assistant
         {
             Engine.MainWindow.SafeAction(s =>
             {
-                scriptEditor.Enabled = !enabled;
-                recordScript.Enabled = !enabled;
-                setScriptHotkey.Enabled = !enabled;
-                scriptTree.Enabled = !enabled;
+                ////scriptEditor.Enabled = !enabled;
+                //recordScript.Enabled = !enabled;
+                //setScriptHotkey.Enabled = !enabled;
+                //scriptTree.Enabled = !enabled;
 
-                saveScript.Enabled = !enabled;
-                newScript.Enabled = !enabled;
+                //saveScript.Enabled = !enabled;
+                //newScript.Enabled = !enabled;
 
                 playScript.Text = !enabled ? "Play" : "Stop";
 
-                recMacro.Enabled = !enabled;
-                playMacro.Enabled = !enabled;
-                macroTree.Enabled = actionList.Enabled = !enabled;
-                newMacro.Enabled = delMacro.Enabled = !enabled;
-                nextMacroAction.Enabled = !enabled;
+                //recMacro.Enabled = !enabled;
+                //playMacro.Enabled = !enabled;
+                //macroTree.Enabled = actionList.Enabled = !enabled;
+                //newMacro.Enabled = delMacro.Enabled = !enabled;
+                //nextMacroAction.Enabled = !enabled;
             });
         }
 

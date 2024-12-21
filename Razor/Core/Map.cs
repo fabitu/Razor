@@ -66,7 +66,7 @@ namespace Assistant
                 return 0;
         }
 
-        public static HuedTile GetTileNear(int mapNum, int x, int y, int z)
+        public static HuedTile GetTileNear(int mapNum, int x, int y, int z, ushort id = 0)
         {
             try
             {
@@ -86,7 +86,7 @@ namespace Assistant
             {
             }
 
-            return new HuedTile(0, 0, (sbyte) z);
+            return new HuedTile(id, 0, (sbyte) z);
         }
 
         private static void GetAverageZ(Ultima.Map map, int x, int y, ref int z, ref int avg, ref int top)
