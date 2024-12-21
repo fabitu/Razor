@@ -132,7 +132,6 @@ namespace Assistant
             Guild, //GuildAlly
         }
 
-
         public static void Initialize()
         {
             PacketHandler.RegisterClientToServerViewer(0x6C, TargetResponse);

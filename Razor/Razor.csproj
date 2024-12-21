@@ -216,6 +216,7 @@
     <Compile Include="Core\Dress.cs" />
     <Compile Include="Core\EncodedSpeech.cs" />
     <Compile Include="Core\DamageTracker.cs" />
+    <Compile Include="Core\StaticEntity.cs" />
     <Compile Include="Core\StaffToolsManager.cs" />
     <Compile Include="Core\MessageManager.cs" />
     <Compile Include="Core\Overrides.cs" />
@@ -289,6 +290,7 @@
     <Compile Include="Gumps\Internal\DamageTrackerGump.cs" />
     <Compile Include="Gumps\Internal\HotKeyGump.cs" />
     <Compile Include="Gumps\Internal\BoatControlGump.cs" />
+    <Compile Include="Gumps\Internal\StaticInfoGump.cs" />
     <Compile Include="Gumps\Internal\SystemMessagesGump.cs" />
     <Compile Include="Gumps\Internal\AgentsGump.cs" />
     <Compile Include="Gumps\Internal\TestMessageGump.cs" />
