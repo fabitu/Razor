@@ -107,7 +107,7 @@ namespace Assistant
 
         public static bool operator >(Point2D l, Point3D r)
         {
-            return l.m_X > r.m_X && l.m_Y > r.m_Y;
+            return l.m_X > r.x && l.m_Y > r.m_Y;
         }
 
         public static bool operator >(Point2D l, IPoint2D r)
@@ -122,7 +122,7 @@ namespace Assistant
 
         public static bool operator <(Point2D l, Point3D r)
         {
-            return l.m_X < r.m_X && l.m_Y < r.m_Y;
+            return l.m_X < r.x && l.m_Y < r.m_Y;
         }
 
         public static bool operator <(Point2D l, IPoint2D r)
@@ -137,7 +137,7 @@ namespace Assistant
 
         public static bool operator >=(Point2D l, Point3D r)
         {
-            return l.m_X >= r.m_X && l.m_Y >= r.m_Y;
+            return l.m_X >= r.x && l.m_Y >= r.m_Y;
         }
 
         public static bool operator >=(Point2D l, IPoint2D r)
@@ -152,7 +152,7 @@ namespace Assistant
 
         public static bool operator <=(Point2D l, Point3D r)
         {
-            return l.m_X <= r.m_X && l.m_Y <= r.m_Y;
+            return l.m_X <= r.x && l.m_Y <= r.m_Y;
         }
 
         public static bool operator <=(Point2D l, IPoint2D r)
@@ -163,7 +163,7 @@ namespace Assistant
 
     public struct Point3D : IPoint3D
     {
-        internal int m_X;
+        internal int x;
         internal int m_Y;
         internal int m_Z;
 
@@ -172,7 +172,7 @@ namespace Assistant
 
         public Point3D(int x, int y, int z)
         {
-            m_X = x;
+            this.x = x;
             m_Y = y;
             m_Z = z;
         }
@@ -187,8 +187,8 @@ namespace Assistant
 
         public int X
         {
-            get { return m_X; }
-            set { m_X = value; }
+            get { return x; }
+            set { x = value; }
         }
 
         public int Y
@@ -205,7 +205,7 @@ namespace Assistant
 
         public override string ToString()
         {
-            return $"({m_X}, {m_Y}, {m_Z})";
+            return $"({x}, {m_Y}, {m_Z})";
         }
 
         public override bool Equals(object o)
@@ -214,12 +214,12 @@ namespace Assistant
 
             IPoint3D p = (IPoint3D) o;
 
-            return m_X == p.X && m_Y == p.Y && m_Z == p.Z;
+            return x == p.X && m_Y == p.Y && m_Z == p.Z;
         }
 
         public override int GetHashCode()
         {
-            return m_X ^ m_Y ^ m_Z;
+            return x ^ m_Y ^ m_Z;
         }
 
         public static Point3D Parse(string value)
@@ -244,32 +244,32 @@ namespace Assistant
 
         public static bool operator ==(Point3D l, Point3D r)
         {
-            return l.m_X == r.m_X && l.m_Y == r.m_Y && l.m_Z == r.m_Z;
+            return l.x == r.x && l.m_Y == r.m_Y && l.m_Z == r.m_Z;
         }
 
         public static bool operator !=(Point3D l, Point3D r)
         {
-            return l.m_X != r.m_X || l.m_Y != r.m_Y || l.m_Z != r.m_Z;
+            return l.x != r.x || l.m_Y != r.m_Y || l.m_Z != r.m_Z;
         }
 
         public static bool operator ==(Point3D l, IPoint3D r)
         {
-            return l.m_X == r.X && l.m_Y == r.Y && l.m_Z == r.Z;
+            return l.x == r.X && l.m_Y == r.Y && l.m_Z == r.Z;
         }
 
         public static bool operator !=(Point3D l, IPoint3D r)
         {
-            return l.m_X != r.X || l.m_Y != r.Y || l.m_Z != r.Z;
+            return l.x != r.X || l.m_Y != r.Y || l.m_Z != r.Z;
         }
 
         public static Point3D operator +(Point3D l, Point3D r)
         {
-            return new Point3D(l.m_X + r.m_X, l.m_Y + r.m_Y, l.m_Z + r.m_Z);
+            return new Point3D(l.x + r.x, l.m_Y + r.m_Y, l.m_Z + r.m_Z);
         }
 
         public static Point3D operator -(Point3D l, Point3D r)
         {
-            return new Point3D(l.m_X - r.m_X, l.m_Y - r.m_Y, l.m_Z - r.m_Z);
+            return new Point3D(l.x - r.x, l.m_Y - r.m_Y, l.m_Z - r.m_Z);
         }
     }
 
@@ -494,7 +494,7 @@ namespace Assistant
 
         public bool Contains(Point3D p)
         {
-            return (m_Start.m_X <= p.m_X && m_Start.m_Y <= p.m_Y && m_End.m_X > p.m_X && m_End.m_Y > p.m_Y);
+            return (m_Start.m_X <= p.x && m_Start.m_Y <= p.m_Y && m_End.m_X > p.x && m_End.m_Y > p.m_Y);
             //return ( m_Start <= p && m_End > p );
         }
 

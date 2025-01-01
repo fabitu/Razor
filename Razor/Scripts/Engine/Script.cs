@@ -8,7 +8,7 @@ namespace Assistant.Scripts.Engine
 {
   public class Script
   {
-    private ASTNode _statement;
+    public ASTNode _statement;
 
     public int CurrentLine
     {
@@ -605,17 +605,19 @@ namespace Assistant.Scripts.Engine
 
     private bool ExecuteCommand(ASTNode node)
     {
+      var recursiveNode = node;
+
       node = EvaluateModifiers(node, out bool quiet, out bool force, out _);
 
-      var handler = Interpreter.GetCommandHandler(node.Lexeme);
-
-      if (handler == null)
-        throw new RunTimeError("Unknown command");
+      var handler = Interpreter.GetCommandHandler(node.Lexeme) ?? throw new RunTimeError("Unknown command");
 
       var cont = handler(node.Lexeme, ConstructArguments(ref node), quiet, force);
 
       if (node != null)
         throw new RunTimeError("Command did not consume all available arguments");
+
+      if (recursiveNode.IsRecursive && !cont)
+        node = recursiveNode;
 
       return cont;
     }

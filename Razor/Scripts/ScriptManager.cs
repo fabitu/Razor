@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Windows.Forms;
 using Assistant.Core;
 using Assistant.Gumps.Internal;
@@ -35,55 +36,22 @@ namespace Assistant.Scripts
   public static class ScriptManager
   {
     public static bool Recording { get; set; }
-
     public static bool Paused => ScriptPaused;
-
     private static bool ScriptPaused { get; set; }
-
     public static bool Running => ScriptRunning;
-
     private static bool ScriptRunning { get; set; }
-
     public static DateTime LastWalk { get; set; }
-
     public static bool SetVariableActive { get; set; }
-
     public static bool TargetFound { get; set; }
-
     public static string ScriptPath => Config.GetUserDirectory("Scripts");
-
     private static FastColoredTextBox ScriptEditor { get; set; }
-
     private static TreeView ScriptTree { get; set; }
-
     private static ListBox ScriptVariableList { get; set; }
 
     private static Script _queuedScript;
 
     private static string _queuedScriptName;
-
     public static bool BlockPopupMenu { get; set; }
-
-    private static bool EnableHighlight { get; set; }
-
-    public enum HighlightType
-    {
-      Error,
-      Execution
-    }
-
-    private static Dictionary<HighlightType, List<int>> HighlightLines { get; } = new Dictionary<HighlightType, List<int>>();
-
-    private static Dictionary<HighlightType, Brush> HighlightLineColors { get; } = new Dictionary<HighlightType, Brush>()
-        {
-            { HighlightType.Error, new SolidBrush(Color.Red) },
-            { HighlightType.Execution, new SolidBrush(Color.Blue) }
-        };
-
-    private static HighlightType[] GetHighlightTypes()
-    {
-      return (HighlightType[])Enum.GetValues(typeof(HighlightType));
-    }
 
     public static RazorScript SelectedScript { get; set; }
 
@@ -117,40 +85,19 @@ namespace Assistant.Scripts
           {
             // Starting a new script. This relies on the atomicity for references in CLR
             Script script = _queuedScript;
-
             running = Interpreter.StartScript(script);
-            UpdateLineNumber(Interpreter.CurrentLine);
-
-            _queuedScript = null;
-          }
-          else
-          {
-            running = Interpreter.ExecuteScript();
-
             if (running)
             {
-              UpdateLineNumber(Interpreter.CurrentLine);
+              NotifyRunningScript();
             }
+            _queuedScript = null;
           }
 
+          running = Interpreter.ScriptIsRunning();
 
           if (running)
           {
-            if (ScriptManager.Running == false)
-            {
-              if (!Config.GetBool("ScriptDisablePlayFinish"))
-              {
-                if (!Config.GetBool("DisableScriptStopwatch"))
-                {
-                  Stopwatch.Start();
-                }
-
-                World.Player?.SendMessage(LocString.ScriptPlaying, _queuedScriptName);
-              }
-
-              Assistant.Engine.MainWindow.LockScriptUI(true);
-              ScriptRunning = true;
-            }
+            Interpreter.ExecuteScript();
           }
           else
           {
@@ -175,8 +122,6 @@ namespace Assistant.Scripts
 
               Assistant.Engine.MainWindow.LockScriptUI(false);
               ScriptRunning = false;
-
-              ClearHighlightLine(HighlightType.Execution);
             }
           }
         }
@@ -184,12 +129,26 @@ namespace Assistant.Scripts
         {
           World.Player?.SendMessage(MsgLevel.Error, $"Script Error: {ex.Message} (Line: {Interpreter.CurrentLine + 1})");
 
-          if (EnableHighlight)
+          StopScript();
+        }
+      }
+
+      private static void NotifyRunningScript()
+      {
+        if (ScriptManager.Running == false)
+        {
+          if (!Config.GetBool("ScriptDisablePlayFinish"))
           {
-            SetHighlightLine(Interpreter.CurrentLine, HighlightType.Error);
+            if (!Config.GetBool("DisableScriptStopwatch"))
+            {
+              Stopwatch.Start();
+            }
+
+            World.Player?.SendMessage(LocString.ScriptPlaying, _queuedScriptName);
           }
 
-          StopScript();
+          Assistant.Engine.MainWindow.LockScriptUI(true);
+          ScriptRunning = true;
         }
       }
     }
@@ -204,16 +163,9 @@ namespace Assistant.Scripts
       HotKey.Add(HKCategory.Scripts, HKSubCat.None, LocString.ScriptDClickType, HotkeyDClickTypeScript);
       HotKey.Add(HKCategory.Scripts, HKSubCat.None, LocString.ScriptTargetType, HotkeyTargetTypeScript);
 
-
       _scriptList = new List<RazorScript>();
 
       Recurse(null, Config.GetUserDirectory("Scripts"));
-
-      foreach (HighlightType type in GetHighlightTypes())
-      {
-        HighlightLines[type] = new List<int>();
-      }
-
       Lexer.AllowLoop = Client.Instance.AllowBit(FeatureBit.LoopingMacros);
     }
 
@@ -402,8 +354,6 @@ namespace Assistant.Scripts
 
       StopScript();
 
-      EnableHighlight = false;
-
       SetVariableActive = false;
 
       if (_queuedScript != null)
@@ -430,13 +380,6 @@ namespace Assistant.Scripts
       if (World.Player == null || ScriptEditor == null || lines == null)
         return;
 
-      EnableHighlight = highlight;
-
-      if (EnableHighlight)
-      {
-        ClearAllHighlightLines();
-      }
-
       if (MacroManager.Playing || MacroManager.StepThrough)
         MacroManager.Stop();
 
@@ -452,7 +395,8 @@ namespace Assistant.Scripts
 
       try
       {
-        Script script = new Script(Lexer.Lex(lines));
+        var node = Lexer.Lex(lines);
+        Script script = new Script(node);
 
         _queuedScript = script;
         _queuedScriptName = name;
@@ -460,11 +404,6 @@ namespace Assistant.Scripts
       catch (SyntaxError syntaxError)
       {
         World.Player.SendMessage(MsgLevel.Error, $"{syntaxError.Message}: '{syntaxError.Line}' (Line #{syntaxError.LineNumber + 1})");
-
-        if (EnableHighlight)
-        {
-          SetHighlightLine(syntaxError.LineNumber, HighlightType.Error);
-        }
       }
     }
 
@@ -493,17 +432,6 @@ namespace Assistant.Scripts
       Timer.Stop();
       Timer = new ScriptTimer(Config.GetBool("DefaultScriptDelay") ? 25 : 0);
       Timer.Start();
-    }
-
-    private static void UpdateLineNumber(int lineNum)
-    {
-      if (EnableHighlight)
-      {
-        SetHighlightLine(lineNum, HighlightType.Execution);
-        // Scrolls to relevant line, per this suggestion: https://github.com/PavelTorgashov/FastColoredTextBox/issues/115
-        ScriptEditor.Selection.Start = new Place(0, lineNum);
-        ScriptEditor.DoSelectionVisible();
-      }
     }
 
     public static void SetEditor(FastColoredTextBox scriptEditor)
@@ -620,64 +548,6 @@ namespace Assistant.Scripts
       return args;
     }
 
-    private delegate void SetHighlightLineDelegate(int iline, Color color);
-
-    /// <summary>
-    /// Adds a new highlight of specified type
-    /// </summary>
-    /// <param name="iline">Line number to highlight</param>
-    /// <param name="type">Type of highlight to set</param>
-    private static void AddHighlightLine(int iline, HighlightType type)
-    {
-      HighlightLines[type].Add(iline);
-      RefreshHighlightLines();
-    }
-
-    /// <summary>
-    /// Clears existing highlight lines of this type, and adds a new one at specified line number
-    /// </summary>
-    /// <param name="iline">Line number to highlight</param>
-    /// <param name="type">Type of highlight to set</param>
-    private static void SetHighlightLine(int iline, HighlightType type)
-    {
-      ClearHighlightLine(type);
-      AddHighlightLine(iline, type);
-    }
-
-    public static void ClearHighlightLine(HighlightType type)
-    {
-      HighlightLines[type].Clear();
-      RefreshHighlightLines();
-    }
-
-    public static void ClearAllHighlightLines()
-    {
-      foreach (HighlightType type in GetHighlightTypes())
-      {
-        HighlightLines[type].Clear();
-      }
-
-      RefreshHighlightLines();
-    }
-
-    private static void RefreshHighlightLines()
-    {
-      for (int i = 0; i < ScriptEditor.LinesCount; i++)
-      {
-        ScriptEditor[i].BackgroundBrush = ScriptEditor.BackBrush;
-      }
-
-      foreach (HighlightType type in GetHighlightTypes())
-      {
-        foreach (int lineNum in HighlightLines[type])
-        {
-          ScriptEditor[lineNum].BackgroundBrush = HighlightLineColors[type];
-        }
-      }
-
-      ScriptEditor.Invalidate();
-    }
-
     private static FastColoredTextBoxNS.AutocompleteMenu _autoCompleteMenu;
 
     public static void InitScriptEditor()
@@ -707,10 +577,10 @@ namespace Assistant.Scripts
                 "alliance", "clearall", "cleardragdrop", "clearhands", "emote", "guild", "attack", "interrupt", "virtue", "yell",
                 "cast", "dclick", "dclicktype",
                 "dress", "drop", "droprelloc", "gumpresponse", "gumpclose", "hotkey", "lasttarget", "lift", "lifttype",
-                "menu", "menuresponse", "organizer", "overhead", "potion", "promptresponse", "restock", "say",
+                "menu", "menuresponse", "organizer", "overhead", "pickup","potion", "promptresponse", "restock", "say",
                 "whisper", "yell", "emote", "script", "scavenger", "sell", "setability", "setlasttarget", "setvar",
                 "skill", "sysmsg", "target", "targettype", "targetrelloc", "undress", "useonce", "walk", "wait",
-                "pause", "waitforgump", "waitformenu", "waitforprompt", "waitfortarget", "waitforsysmsg", "clearsysmsg", "clearjournal",
+                "pause", "waitforgump", "waitformenu", "waitforprompt", "waitfortarget", "waitforsysmsg","walkto", "clearsysmsg", "clearjournal",
                 "waitforsysmsg", "random"
             };
 
@@ -745,10 +615,8 @@ namespace Assistant.Scripts
       descriptionCommands.Add("dclick", tooltip);
 
       tooltip = new ToolTipDescriptions("dclicktype",
-          new[]
-          {
-                        "dclicktype ('name of item') OR (graphicID) [inrange] or usetype ('name of item') OR (graphicID) [inrange/backpack] [hue]"
-          }, "N/A",
+        new[] { "dclicktype ('name of item') OR (graphicID) [inrange] or usetype ('name of item') OR (graphicID) [inrange/backpack] [hue]" },
+          "N/A",
           "This command will use (double-click) an item type either provided by the name or the graphic ID.\n\t\tIf you include the optional true parameter, items within range (2 tiles) will only be considered.",
           "dclicktype 'dagger'\n\t\twaitfortarget\n\t\ttargettype 'robe'");
       descriptionCommands.Add("dclicktype", tooltip);
@@ -983,6 +851,19 @@ namespace Assistant.Scripts
           "This command output a random number between 1 and the max number provided.",
           "random '15'\n");
       descriptionCommands.Add("random", tooltip);
+
+      tooltip = new ToolTipDescriptions("pickup",
+           new[] { "pickUp (serial) (fromContainer) (ToContainer) [count,default=1] [delay,default= 100ms]" },
+            "N/A",
+            "This command PickUp item from container and move to container.",
+            "pickUp '3717' '0x40009A46' 'backpack' 3 1000");
+      descriptionCommands.Add("pickup", tooltip);
+
+      tooltip = new ToolTipDescriptions("walkto",
+        new[] { "walto (X) (Y) [z, default 0]" },
+        "N/A", "This command walkto walk to position",
+        "walkto 2170 2589 0");
+      descriptionCommands.Add("walkto", tooltip);
 
       #endregion
 
@@ -1269,7 +1150,7 @@ namespace Assistant.Scripts
         if (mobile != null)
         {
           MobileInfoGump mobileGump = new MobileInfoGump(mobile);
-          mobileGump.SendGump();          
+          mobileGump.SendGump();
         }
 
         //EP: Show StaticInfoGump

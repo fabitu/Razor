@@ -19,6 +19,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using Assistant.Agents;
 using Ultima;
 
@@ -625,7 +626,7 @@ namespace Assistant
 
     public sealed class VendorSellResponse : Packet
     {
-        public VendorSellResponse(Mobile vendor, List<SellListItem> list) : base(0x9F)
+        public VendorSellResponse(Mobile vendor, List<SellListItem> list, int delay = 50) : base(0x9F)
         {
             EnsureCapacity(1 + 2 + 4 + 2 + list.Count * 6);
 
@@ -637,6 +638,7 @@ namespace Assistant
                 SellListItem sli = list[i];
                 Write((uint) sli.Serial);
                 Write((ushort) sli.Amount);
+                Thread.Sleep(delay);
             }
         }
     }
