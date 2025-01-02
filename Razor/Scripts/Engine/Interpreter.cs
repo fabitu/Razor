@@ -378,9 +378,7 @@ namespace Assistant.Scripts.Engine
       _currentScope = _scope;
       _activeScript = script;
       _activeScript.Initialize();
-      _executionState = ExecutionState.RUNNING;
-
-      ExecuteScript();
+      _executionState = ExecutionState.RUNNING;            
 
       return true;
     }
@@ -457,7 +455,7 @@ namespace Assistant.Scripts.Engine
       }
 
       if (!_activeScript.ExecuteNext())
-      {
+      {        
         _activeScript = null;
         return false;
       }
