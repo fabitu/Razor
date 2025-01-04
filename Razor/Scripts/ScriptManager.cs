@@ -89,7 +89,7 @@ namespace Assistant.Scripts
             if (running)
             {
               NotifyRunningScript();
-            }            
+            }
             _queuedScript = null;
           }
 
@@ -173,7 +173,7 @@ namespace Assistant.Scripts
 
       try
       {
-        Script script = new Script(Lexer.Lex(lines));        
+        Script script = new Script(Lexer.Lex(lines));
         _queuedScript = script;
         _queuedScriptName = name;
       }
@@ -403,7 +403,7 @@ namespace Assistant.Scripts
           break;
         }
       }
-    }     
+    }
     private static ScriptTimer Timer { get; set; }
 
     static ScriptManager()
@@ -501,6 +501,11 @@ namespace Assistant.Scripts
       return false;
     }
 
+    public static RazorScript GetScript(string scriptName)
+    {
+      return _scriptList.FirstOrDefault(x => x.Name.Equals(scriptName, StringComparison.OrdinalIgnoreCase));
+    }
+
     private static int GetScriptIndex(string script)
     {
       for (int i = 0; i < _scriptList.Count; i++)
@@ -558,7 +563,7 @@ namespace Assistant.Scripts
 
       string[] commands =
       {
-                "alliance", "clearall", "cleardragdrop", "clearhands", "emote", "guild", "attack", "interrupt", "virtue", "yell",
+                "alliance", "call", "clearall", "cleardragdrop", "clearhands", "emote", "guild", "attack", "interrupt", "virtue", "yell",
                 "cast", "dclick", "dclicktype",
                 "dress", "drop", "droprelloc", "gumpresponse", "gumpclose", "hotkey", "lasttarget", "lift", "lifttype",
                 "menu", "menuresponse", "organizer", "overhead", "pickup","potion", "promptresponse", "restock", "say",
@@ -844,10 +849,18 @@ namespace Assistant.Scripts
       descriptionCommands.Add("pickup", tooltip);
 
       tooltip = new ToolTipDescriptions("walkto",
-        new[] { "walto (X) (Y) [z, default 0]" },
-        "N/A", "This command walkto walk to position",
-        "walkto 2170 2589 0");
+        new[] { "Usage: walkto (X) (Y) [z, default 0] [timeout, default 5s]" },
+        "true if arrived at the final destination",
+        "This command walkto walk to position",
+        "walkto 2170 2589 0 10");
       descriptionCommands.Add("walkto", tooltip);
+
+      tooltip = new ToolTipDescriptions("call",
+        new[] { "call 'script'" },
+         "N/A",
+         "This command will incorporete another script to this script.",
+        "call 'script'");
+      descriptionCommands.Add("call", tooltip);
 
       #endregion
 

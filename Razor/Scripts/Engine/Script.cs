@@ -604,9 +604,7 @@ namespace Assistant.Scripts.Engine
     }
 
     private bool ExecuteCommand(ASTNode node)
-    {
-      var recursiveNode = node;
-
+    {    
       node = EvaluateModifiers(node, out bool quiet, out bool force, out _);
 
       var handler = Interpreter.GetCommandHandler(node.Lexeme) ?? throw new RunTimeError("Unknown command");
@@ -614,10 +612,7 @@ namespace Assistant.Scripts.Engine
       var cont = handler(node.Lexeme, ConstructArguments(ref node), quiet, force);
 
       if (node != null)
-        throw new RunTimeError("Command did not consume all available arguments");
-
-      if (recursiveNode.IsRecursive && !cont)
-        node = recursiveNode;
+        throw new RunTimeError("Command did not consume all available arguments");   
 
       return cont;
     }

@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TrackBar;
 
 namespace Assistant.Scripts.Engine
 {
@@ -378,7 +379,7 @@ namespace Assistant.Scripts.Engine
       _currentScope = _scope;
       _activeScript = script;
       _activeScript.Initialize();
-      _executionState = ExecutionState.RUNNING;            
+      _executionState = ExecutionState.RUNNING;
 
       return true;
     }
@@ -429,14 +430,13 @@ namespace Assistant.Scripts.Engine
           return true;
       }
       else if (_executionState == ExecutionState.TIMING_OUT)
-      {
+      {        
         if (_pauseTimeout < DateTime.UtcNow.Ticks)
         {
           if (_timeoutCallback != null)
           {
             if (_timeoutCallback())
             {
-              _activeScript.Advance();
               ClearTimeout();
             }
 
@@ -453,9 +453,8 @@ namespace Assistant.Scripts.Engine
           }
         }
       }
-
-      if (!_activeScript.ExecuteNext())
-      {        
+      else if (!_activeScript.ExecuteNext())
+      {
         _activeScript = null;
         return false;
       }
@@ -493,19 +492,8 @@ namespace Assistant.Scripts.Engine
         return;
 
       _pauseTimeout = DateTime.UtcNow.Ticks + (duration * 10000);
-      _executionState = ExecutionState.TIMING_OUT;
-      _timeoutCallback = callback;
-    }
-
-    // If forward progress on the script isn't made within this
-    // amount of time (milliseconds), bail
-    public static void Timeout(long duration, long timeout, TimeoutCallback callback)
-    {
-      // Don't change an existing timeout
-      if (_executionState != ExecutionState.RUNNING)
-        return;
-
-      _pauseTimeout = DateTime.UtcNow.Ticks + (duration * timeout);
+      // Convert ticks to DateTime
+      DateTime dateTime = new DateTime(_pauseTimeout);      
       _executionState = ExecutionState.TIMING_OUT;
       _timeoutCallback = callback;
     }

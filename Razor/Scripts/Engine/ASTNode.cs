@@ -12,8 +12,7 @@ namespace Assistant.Scripts.Engine
     public readonly ASTNodeType Type;
     public readonly string Lexeme;
     public readonly ASTNode Parent;
-    public readonly int LineNumber;
-    public bool IsRecursive;
+    public readonly int LineNumber;  
 
     internal LinkedListNode<ASTNode> _node;
     private LinkedList<ASTNode> _children;
@@ -21,16 +20,7 @@ namespace Assistant.Scripts.Engine
     public ASTNode(ASTNodeType type, string lexeme, ASTNode parent, int lineNumber)
     {
       Type = type;
-      if (lexeme != null)
-      {
-        Lexeme = lexeme;
-        if (lexeme.Equals("walkto"))
-          IsRecursive = true;
-      }
-      else
-      {
-        Lexeme = "";
-      }
+      Lexeme = lexeme != null ? lexeme : "";
       Parent = parent;
       LineNumber = lineNumber;
     }

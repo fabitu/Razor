@@ -22,7 +22,7 @@ using System.IO;
 using System.Linq;
 
 namespace Assistant.Scripts.Engine
-{   
+{
   public static class Lexer
   {
     private static int _curLine = 0;
@@ -51,9 +51,33 @@ namespace Assistant.Scripts.Engine
 
       try
       {
-        for (_curLine = 0; _curLine < lines.Length; _curLine++)
+        for (int line = 0; line < lines.Length; line++)
         {
-          foreach (var l in lines[_curLine].Split(';'))
+          foreach (var l in lines[line].Split(';'))
+          {
+            ParseLine(node, l);
+          }
+        }
+      }
+      catch (SyntaxError e)
+      {
+        throw new SyntaxError(lines[_curLine], _curLine, e.Node, e.Message);
+      }
+      catch (Exception e)
+      {
+        throw new SyntaxError(lines[_curLine], _curLine, null, e.Message);
+      }
+
+      return node;
+    }
+
+    public static ASTNode Lex(ASTNode node, string[] lines)
+    {
+      try
+      {
+        for (int i = 0; i < lines.Length; i++)
+        {
+          foreach (var l in lines[i].Split(';'))
           {
             ParseLine(node, l);
           }
@@ -232,7 +256,11 @@ namespace Assistant.Scripts.Engine
 
     private static void ParseStatement(ASTNode node, string[] lexemes)
     {
-      var statement = node.Push(ASTNodeType.STATEMENT, null, _curLine);
+      ASTNode statement = null;
+      if (!lexemes[0].Equals("call", StringComparison.OrdinalIgnoreCase))
+      {
+        statement = node.Push(ASTNodeType.STATEMENT, null, _curLine);
+      }
 
       // Examine the first word on the line
       switch (lexemes[0])
@@ -334,6 +362,18 @@ namespace Assistant.Scripts.Engine
             throw new SyntaxError(node, "Script compilation error");
 
           statement.Push(AllowLoop ? ASTNodeType.REPLAY : ASTNodeType.STOP, null, _curLine);
+          break;
+        case "call":
+          if (lexemes.Length > 2)
+            throw new SyntaxError(node, "Script compilation error");
+
+          var script = ScriptManager.GetScript(lexemes[1]);
+          if (script == null)
+          {
+            throw new SyntaxError(node, $"Script {lexemes[1]} not found!");
+          }
+          Lex(node, script.Lines);
+
           break;
         default:
           // It's a regular statement.

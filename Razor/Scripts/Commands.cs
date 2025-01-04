@@ -1113,63 +1113,68 @@ namespace Assistant.Scripts
       return true;
     }
 
-    //private static bool WalkTo(string command, Variable[] vars, bool quiet, bool force)
-    //{
-    //  if (vars.Length < 2)
-    //  {
-    //    throw new RunTimeError("Usage: Walkto (X) (y) [z, default 0]");
-    //  }
-    //  int x = vars[0].AsInt();
-    //  int y = vars[1].AsInt();
-    //  int z = vars.Length < 2 ? 0 : vars[2].AsInt();
-
-    //  //diferença
-    //  var DX = 0;
-    //  var DY = 0;
-    //  EnsurePositions(x, y, ref DX, ref DY);
-    //  var currentPos = World.Player.Position;
-    //  //Se não está na posição que pediu precisa andar      
-    //  if (DX != 0 || DY != 0)
-    //  {
-    //    Client.Instance.SendToClient(new PathFindTo(new Point3D(x, y, z)));
-    //    EnsurePositions(x, y, ref DX, ref DY);
-    //  }
-
-    //  return true;
-    //}
-
     public static bool WalkTo(string command, Variable[] vars, bool quiet, bool force)
     {
       if (vars.Length < 2)
       {
-        throw new RunTimeError("Usage: Walkto (X) (y) [z, default 0]");
+        throw new RunTimeError("Usage: Walkto (X) (Y) [z, default 0] [timeout, default 5s]");
       }
       int x = vars[0].AsInt();
       int y = vars[1].AsInt();
+      int z = vars.Length < 3 ? 0 : vars[2].AsInt();
+      int timeout = vars.Length < 4 ? 5 : vars[3].AsInt();
 
-      var destination = new Point3D(x, y, 0);
-      var currentPosition = World.Player.Position;
+      var destination = new Point3D(x, y, z);
+      var firstPosition = World.Player.Position;
+      if (destination.Equals(firstPosition))
+      {
+        CommandHelper.SendInfo($"Você chegou ao destino!", quiet);
+        return true;
+      }
 
       // Calcula a diferença entre o destino e a posição atual
-      int deltaX = destination.X - currentPosition.X;
-      int deltaY = destination.Y - currentPosition.Y;
+      int deltaX = destination.X - firstPosition.X;
+      int deltaY = destination.Y - firstPosition.Y;
+      int deltaZ = destination.Z - firstPosition.Z;
 
       // Limita o movimento em no máximo 1 unidades por eixo
       int moveX = Clamp(deltaX, -1, 1);
       int moveY = Clamp(deltaY, -1, 1);
+      int moveZ = Clamp(deltaZ, -1, 1);
 
-      var newLocation = new Point3D(currentPosition.X + moveX, currentPosition.Y + moveY, 0);
+      var newLocation = new Point3D(firstPosition.X + moveX, firstPosition.Y + moveY, firstPosition.Z + moveZ);
       var packet = new PathFindTo(newLocation);
       Client.Instance.SendToClient(packet);
-
-      Interpreter.Timeout(5, 1000, () =>
+      Interpreter.Timeout(timeout, () =>
       {
+        if (destination.Equals(firstPosition))
+        {
+          World.Player?.SendMessage($"Você chegou ao destino!");
+          Interpreter.ClearTimeout();
+          return true;
+        }
         return true;
       });
 
-      currentPosition = World.Player.Position;
-      var result = currentPosition.X == destination.X && currentPosition.Y == destination.Y;
-      CommandHelper.SendWarning(command, $"{result} - {destination} - {currentPosition}", quiet);
+      var currentPosition = World.Player.Position;
+      var result = destination.Equals(currentPosition);
+      if (result)
+      {
+        World.Player?.SendMessage($"Você chegou ao destino!");
+      }
+      else if (firstPosition.Equals(World.Player.Position))//Não andou
+      {
+        var doors = World.Items.Values.Where(s => s.IsDoor &&
+                                        s.Position.X == newLocation.X &&
+                                        s.Position.Y == newLocation.Y &&
+                                        s.Position.Z - 15 <= z &&
+                                        s.Position.Z + 15 >= z);
+        if (doors.Any())
+        {         
+          PlayerData.OpenDoor(false, doors);
+        }
+      }
+
       return result;
     }
 
