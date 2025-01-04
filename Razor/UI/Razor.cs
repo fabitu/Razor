@@ -7448,7 +7448,7 @@ namespace Assistant
           }
         }
 
-        ScriptManager.SetEditorText(_selectedScript);     
+        ScriptManager.SetEditorText(_selectedScript);
       });
     }
 
@@ -8208,10 +8208,9 @@ namespace Assistant
 
       Config.SetProperty("CooldownWidth", width);
     }
-
-    private void agentB6_VisibleChanged(object sender, EventArgs e)
+    private void copyPosition_Click(object sender, EventArgs e)
     {
-
+      Clipboard.SetText($"walkto {World.Player.Position.X} {World.Player.Position.Y} {World.Player.Position.Z}");
     }
   }
 }
