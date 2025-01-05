@@ -834,6 +834,7 @@ namespace Assistant
       this.linkMain = new System.Windows.Forms.LinkLabel();
       this.label21 = new System.Windows.Forms.Label();
       this.aboutVer = new System.Windows.Forms.Label();
+      this.lblCurrentPosition = new System.Windows.Forms.Label();
       this.tabs.SuspendLayout();
       this.generalTab.SuspendLayout();
       this.subGeneralTab.SuspendLayout();
@@ -938,7 +939,7 @@ namespace Assistant
       this.tabs.Multiline = true;
       this.tabs.Name = "tabs";
       this.tabs.SelectedIndex = 0;
-      this.tabs.Size = new System.Drawing.Size(595, 464);
+      this.tabs.Size = new System.Drawing.Size(595, 596);
       this.tabs.SizeMode = System.Windows.Forms.TabSizeMode.FillToRight;
       this.tabs.TabIndex = 0;
       this.tabs.SelectedIndexChanged += new System.EventHandler(this.tabs_IndexChanged);
@@ -1576,7 +1577,7 @@ namespace Assistant
       this.subOptionsTargetTab.Location = new System.Drawing.Point(4, 22);
       this.subOptionsTargetTab.Name = "subOptionsTargetTab";
       this.subOptionsTargetTab.Padding = new System.Windows.Forms.Padding(3);
-      this.subOptionsTargetTab.Size = new System.Drawing.Size(570, 402);
+      this.subOptionsTargetTab.Size = new System.Drawing.Size(570, 382);
       this.subOptionsTargetTab.TabIndex = 1;
       this.subOptionsTargetTab.Text = "Targeting & Queues  ";
       // 
@@ -1841,7 +1842,7 @@ namespace Assistant
       this.subOptionsMiscTab.Controls.Add(this.blockDis);
       this.subOptionsMiscTab.Location = new System.Drawing.Point(4, 22);
       this.subOptionsMiscTab.Name = "subOptionsMiscTab";
-      this.subOptionsMiscTab.Size = new System.Drawing.Size(570, 402);
+      this.subOptionsMiscTab.Size = new System.Drawing.Size(570, 382);
       this.subOptionsMiscTab.TabIndex = 2;
       this.subOptionsMiscTab.Text = "Additional Options  ";
       // 
@@ -2420,7 +2421,7 @@ namespace Assistant
       this.subCountersTab.Location = new System.Drawing.Point(4, 22);
       this.subCountersTab.Name = "subCountersTab";
       this.subCountersTab.Padding = new System.Windows.Forms.Padding(3);
-      this.subCountersTab.Size = new System.Drawing.Size(570, 402);
+      this.subCountersTab.Size = new System.Drawing.Size(570, 382);
       this.subCountersTab.TabIndex = 1;
       this.subCountersTab.Text = "Counters";
       // 
@@ -2480,7 +2481,7 @@ namespace Assistant
       this.groupBox2.Controls.Add(this.recount);
       this.groupBox2.Location = new System.Drawing.Point(6, 6);
       this.groupBox2.Name = "groupBox2";
-      this.groupBox2.Size = new System.Drawing.Size(284, 298);
+      this.groupBox2.Size = new System.Drawing.Size(284, 278);
       this.groupBox2.TabIndex = 2;
       this.groupBox2.TabStop = false;
       this.groupBox2.Text = "Counters";
@@ -2500,7 +2501,7 @@ namespace Assistant
       this.counters.Location = new System.Drawing.Point(6, 18);
       this.counters.MultiSelect = false;
       this.counters.Name = "counters";
-      this.counters.Size = new System.Drawing.Size(272, 231);
+      this.counters.Size = new System.Drawing.Size(272, 211);
       this.counters.TabIndex = 11;
       this.counters.UseCompatibleStateImageBehavior = false;
       this.counters.View = System.Windows.Forms.View.Details;
@@ -2519,7 +2520,7 @@ namespace Assistant
       // delCounter
       // 
       this.delCounter.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-      this.delCounter.Location = new System.Drawing.Point(108, 255);
+      this.delCounter.Location = new System.Drawing.Point(108, 235);
       this.delCounter.Name = "delCounter";
       this.delCounter.Size = new System.Drawing.Size(71, 37);
       this.delCounter.TabIndex = 4;
@@ -2529,7 +2530,7 @@ namespace Assistant
       // addCounter
       // 
       this.addCounter.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-      this.addCounter.Location = new System.Drawing.Point(6, 255);
+      this.addCounter.Location = new System.Drawing.Point(6, 235);
       this.addCounter.Name = "addCounter";
       this.addCounter.Size = new System.Drawing.Size(70, 37);
       this.addCounter.TabIndex = 3;
@@ -2539,7 +2540,7 @@ namespace Assistant
       // recount
       // 
       this.recount.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-      this.recount.Location = new System.Drawing.Point(208, 255);
+      this.recount.Location = new System.Drawing.Point(208, 235);
       this.recount.Name = "recount";
       this.recount.Size = new System.Drawing.Size(70, 37);
       this.recount.TabIndex = 2;
@@ -2562,7 +2563,7 @@ namespace Assistant
       this.subBandageTimerTab.Controls.Add(this.lblBandageCountFormat);
       this.subBandageTimerTab.Location = new System.Drawing.Point(4, 22);
       this.subBandageTimerTab.Name = "subBandageTimerTab";
-      this.subBandageTimerTab.Size = new System.Drawing.Size(570, 402);
+      this.subBandageTimerTab.Size = new System.Drawing.Size(570, 382);
       this.subBandageTimerTab.TabIndex = 2;
       this.subBandageTimerTab.Text = "Bandage Timer";
       // 
@@ -2698,14 +2699,14 @@ namespace Assistant
       this.subOverheadTab.Controls.Add(this.showOverheadMessages);
       this.subOverheadTab.Location = new System.Drawing.Point(4, 22);
       this.subOverheadTab.Name = "subOverheadTab";
-      this.subOverheadTab.Size = new System.Drawing.Size(570, 402);
+      this.subOverheadTab.Size = new System.Drawing.Size(570, 382);
       this.subOverheadTab.TabIndex = 3;
       this.subOverheadTab.Text = "Overhead Messages";
       // 
       // setSound
       // 
       this.setSound.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-      this.setSound.Location = new System.Drawing.Point(8, 281);
+      this.setSound.Location = new System.Drawing.Point(8, 261);
       this.setSound.Name = "setSound";
       this.setSound.Size = new System.Drawing.Size(84, 28);
       this.setSound.TabIndex = 103;
@@ -2749,7 +2750,7 @@ namespace Assistant
       // editOverheadMessage
       // 
       this.editOverheadMessage.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-      this.editOverheadMessage.Location = new System.Drawing.Point(8, 179);
+      this.editOverheadMessage.Location = new System.Drawing.Point(8, 159);
       this.editOverheadMessage.Name = "editOverheadMessage";
       this.editOverheadMessage.Size = new System.Drawing.Size(84, 28);
       this.editOverheadMessage.TabIndex = 97;
@@ -2760,7 +2761,7 @@ namespace Assistant
       // setColorHue
       // 
       this.setColorHue.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-      this.setColorHue.Location = new System.Drawing.Point(8, 247);
+      this.setColorHue.Location = new System.Drawing.Point(8, 227);
       this.setColorHue.Name = "setColorHue";
       this.setColorHue.Size = new System.Drawing.Size(84, 28);
       this.setColorHue.TabIndex = 96;
@@ -2771,7 +2772,7 @@ namespace Assistant
       // removeOverheadMessage
       // 
       this.removeOverheadMessage.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-      this.removeOverheadMessage.Location = new System.Drawing.Point(8, 213);
+      this.removeOverheadMessage.Location = new System.Drawing.Point(8, 193);
       this.removeOverheadMessage.Name = "removeOverheadMessage";
       this.removeOverheadMessage.Size = new System.Drawing.Size(84, 28);
       this.removeOverheadMessage.TabIndex = 95;
@@ -2821,7 +2822,7 @@ namespace Assistant
       this.cliLocOverheadView.HideSelection = false;
       this.cliLocOverheadView.Location = new System.Drawing.Point(98, 156);
       this.cliLocOverheadView.Name = "cliLocOverheadView";
-      this.cliLocOverheadView.Size = new System.Drawing.Size(447, 153);
+      this.cliLocOverheadView.Size = new System.Drawing.Size(447, 133);
       this.cliLocOverheadView.TabIndex = 91;
       this.cliLocOverheadView.UseCompatibleStateImageBehavior = false;
       this.cliLocOverheadView.View = System.Windows.Forms.View.Details;
@@ -2929,7 +2930,7 @@ namespace Assistant
       this.subWaypoints.Controls.Add(this.waypointList);
       this.subWaypoints.Location = new System.Drawing.Point(4, 22);
       this.subWaypoints.Name = "subWaypoints";
-      this.subWaypoints.Size = new System.Drawing.Size(570, 402);
+      this.subWaypoints.Size = new System.Drawing.Size(570, 382);
       this.subWaypoints.TabIndex = 4;
       this.subWaypoints.Text = "Waypoints";
       // 
@@ -3107,7 +3108,7 @@ namespace Assistant
       this.waypointList.ItemHeight = 15;
       this.waypointList.Location = new System.Drawing.Point(11, 12);
       this.waypointList.Name = "waypointList";
-      this.waypointList.Size = new System.Drawing.Size(164, 184);
+      this.waypointList.Size = new System.Drawing.Size(164, 154);
       this.waypointList.TabIndex = 0;
       this.waypointList.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.listWaypoints_MouseDoubleClick);
       this.waypointList.MouseDown += new System.Windows.Forms.MouseEventHandler(this.listWaypoints_MouseDown);
@@ -3121,7 +3122,7 @@ namespace Assistant
       this.subBuffsDebuffs.Controls.Add(this.showBuffDebuffOverhead);
       this.subBuffsDebuffs.Location = new System.Drawing.Point(4, 22);
       this.subBuffsDebuffs.Name = "subBuffsDebuffs";
-      this.subBuffsDebuffs.Size = new System.Drawing.Size(570, 402);
+      this.subBuffsDebuffs.Size = new System.Drawing.Size(570, 382);
       this.subBuffsDebuffs.TabIndex = 5;
       this.subBuffsDebuffs.Text = "Buffs / Cooldowns";
       // 
@@ -3977,7 +3978,7 @@ namespace Assistant
       this.subFilterText.Controls.Add(this.gbFilterMessages);
       this.subFilterText.Location = new System.Drawing.Point(4, 22);
       this.subFilterText.Name = "subFilterText";
-      this.subFilterText.Size = new System.Drawing.Size(566, 401);
+      this.subFilterText.Size = new System.Drawing.Size(566, 381);
       this.subFilterText.TabIndex = 4;
       this.subFilterText.Text = "Text && Messages  ";
       // 
@@ -3991,7 +3992,7 @@ namespace Assistant
       this.gbFilterText.Controls.Add(this.enableTextFilter);
       this.gbFilterText.Location = new System.Drawing.Point(3, 3);
       this.gbFilterText.Name = "gbFilterText";
-      this.gbFilterText.Size = new System.Drawing.Size(229, 265);
+      this.gbFilterText.Size = new System.Drawing.Size(229, 245);
       this.gbFilterText.TabIndex = 134;
       this.gbFilterText.TabStop = false;
       this.gbFilterText.Text = "Text Filter";
@@ -3999,7 +4000,7 @@ namespace Assistant
       // removeFilterText
       // 
       this.removeFilterText.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-      this.removeFilterText.Location = new System.Drawing.Point(148, 230);
+      this.removeFilterText.Location = new System.Drawing.Point(148, 210);
       this.removeFilterText.Name = "removeFilterText";
       this.removeFilterText.Size = new System.Drawing.Size(75, 29);
       this.removeFilterText.TabIndex = 2;
@@ -4010,7 +4011,7 @@ namespace Assistant
       // addFilterText
       // 
       this.addFilterText.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-      this.addFilterText.Location = new System.Drawing.Point(67, 230);
+      this.addFilterText.Location = new System.Drawing.Point(67, 210);
       this.addFilterText.Name = "addFilterText";
       this.addFilterText.Size = new System.Drawing.Size(75, 29);
       this.addFilterText.TabIndex = 1;
@@ -4026,7 +4027,7 @@ namespace Assistant
       this.textFilterList.ItemHeight = 15;
       this.textFilterList.Location = new System.Drawing.Point(6, 48);
       this.textFilterList.Name = "textFilterList";
-      this.textFilterList.Size = new System.Drawing.Size(217, 64);
+      this.textFilterList.Size = new System.Drawing.Size(217, 34);
       this.textFilterList.TabIndex = 0;
       // 
       // enableTextFilter
@@ -4054,7 +4055,7 @@ namespace Assistant
       this.gbFilterMessages.Controls.Add(this.filterSnoop);
       this.gbFilterMessages.Location = new System.Drawing.Point(238, 3);
       this.gbFilterMessages.Name = "gbFilterMessages";
-      this.gbFilterMessages.Size = new System.Drawing.Size(303, 265);
+      this.gbFilterMessages.Size = new System.Drawing.Size(303, 245);
       this.gbFilterMessages.TabIndex = 133;
       this.gbFilterMessages.TabStop = false;
       this.gbFilterMessages.Text = "Filter Messages";
@@ -4136,7 +4137,7 @@ namespace Assistant
       this.subFilterSoundMusic.Controls.Add(this.soundFilterList);
       this.subFilterSoundMusic.Location = new System.Drawing.Point(4, 22);
       this.subFilterSoundMusic.Name = "subFilterSoundMusic";
-      this.subFilterSoundMusic.Size = new System.Drawing.Size(566, 401);
+      this.subFilterSoundMusic.Size = new System.Drawing.Size(566, 381);
       this.subFilterSoundMusic.TabIndex = 3;
       this.subFilterSoundMusic.Text = "Sound & Music  ";
       // 
@@ -4230,7 +4231,7 @@ namespace Assistant
       this.soundFilterList.FormattingEnabled = true;
       this.soundFilterList.Location = new System.Drawing.Point(8, 14);
       this.soundFilterList.Name = "soundFilterList";
-      this.soundFilterList.Size = new System.Drawing.Size(201, 130);
+      this.soundFilterList.Size = new System.Drawing.Size(201, 94);
       this.soundFilterList.TabIndex = 0;
       this.soundFilterList.SelectedIndexChanged += new System.EventHandler(this.soundFilterList_SelectedIndexChanged);
       // 
@@ -4246,7 +4247,7 @@ namespace Assistant
       this.subFilterTargets.Location = new System.Drawing.Point(4, 22);
       this.subFilterTargets.Name = "subFilterTargets";
       this.subFilterTargets.Padding = new System.Windows.Forms.Padding(3);
-      this.subFilterTargets.Size = new System.Drawing.Size(566, 401);
+      this.subFilterTargets.Size = new System.Drawing.Size(566, 381);
       this.subFilterTargets.TabIndex = 1;
       this.subFilterTargets.Text = "Target Filter";
       // 
@@ -4262,7 +4263,7 @@ namespace Assistant
       // targetFilterClear
       // 
       this.targetFilterClear.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-      this.targetFilterClear.Location = new System.Drawing.Point(461, 227);
+      this.targetFilterClear.Location = new System.Drawing.Point(461, 207);
       this.targetFilterClear.Name = "targetFilterClear";
       this.targetFilterClear.Size = new System.Drawing.Size(77, 29);
       this.targetFilterClear.TabIndex = 17;
@@ -4273,7 +4274,7 @@ namespace Assistant
       // targetFilterRemove
       // 
       this.targetFilterRemove.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-      this.targetFilterRemove.Location = new System.Drawing.Point(381, 227);
+      this.targetFilterRemove.Location = new System.Drawing.Point(381, 207);
       this.targetFilterRemove.Name = "targetFilterRemove";
       this.targetFilterRemove.Size = new System.Drawing.Size(74, 29);
       this.targetFilterRemove.TabIndex = 16;
@@ -4284,7 +4285,7 @@ namespace Assistant
       // targetFilterAdd
       // 
       this.targetFilterAdd.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-      this.targetFilterAdd.Location = new System.Drawing.Point(293, 227);
+      this.targetFilterAdd.Location = new System.Drawing.Point(293, 207);
       this.targetFilterAdd.Name = "targetFilterAdd";
       this.targetFilterAdd.Size = new System.Drawing.Size(82, 29);
       this.targetFilterAdd.TabIndex = 15;
@@ -4300,7 +4301,7 @@ namespace Assistant
       this.targetFilter.ItemHeight = 15;
       this.targetFilter.Location = new System.Drawing.Point(293, 6);
       this.targetFilter.Name = "targetFilter";
-      this.targetFilter.Size = new System.Drawing.Size(245, 124);
+      this.targetFilter.Size = new System.Drawing.Size(245, 94);
       this.targetFilter.TabIndex = 14;
       // 
       // targetFilterEnabled
@@ -4673,7 +4674,7 @@ namespace Assistant
       this.subMacrosOptionsTab.Location = new System.Drawing.Point(4, 22);
       this.subMacrosOptionsTab.Name = "subMacrosOptionsTab";
       this.subMacrosOptionsTab.Padding = new System.Windows.Forms.Padding(3);
-      this.subMacrosOptionsTab.Size = new System.Drawing.Size(570, 402);
+      this.subMacrosOptionsTab.Size = new System.Drawing.Size(570, 382);
       this.subMacrosOptionsTab.TabIndex = 1;
       this.subMacrosOptionsTab.Text = "Options";
       // 
@@ -4766,7 +4767,7 @@ namespace Assistant
       this.macroVariableGroup.Controls.Add(this.macroVariables);
       this.macroVariableGroup.Location = new System.Drawing.Point(6, 6);
       this.macroVariableGroup.Name = "macroVariableGroup";
-      this.macroVariableGroup.Size = new System.Drawing.Size(240, 315);
+      this.macroVariableGroup.Size = new System.Drawing.Size(240, 295);
       this.macroVariableGroup.TabIndex = 6;
       this.macroVariableGroup.TabStop = false;
       this.macroVariableGroup.Text = "Macro Variables:";
@@ -4837,10 +4838,11 @@ namespace Assistant
       // scriptsTab
       // 
       this.scriptsTab.BackColor = System.Drawing.SystemColors.Control;
+      this.scriptsTab.Controls.Add(this.lblCurrentPosition);
       this.scriptsTab.Controls.Add(this.subTabScripts);
       this.scriptsTab.Location = new System.Drawing.Point(4, 44);
       this.scriptsTab.Name = "scriptsTab";
-      this.scriptsTab.Size = new System.Drawing.Size(587, 416);
+      this.scriptsTab.Size = new System.Drawing.Size(587, 548);
       this.scriptsTab.TabIndex = 13;
       this.scriptsTab.Text = "Scripts";
       // 
@@ -4854,7 +4856,7 @@ namespace Assistant
       this.subTabScripts.Location = new System.Drawing.Point(6, 3);
       this.subTabScripts.Name = "subTabScripts";
       this.subTabScripts.SelectedIndex = 0;
-      this.subTabScripts.Size = new System.Drawing.Size(574, 407);
+      this.subTabScripts.Size = new System.Drawing.Size(574, 509);
       this.subTabScripts.TabIndex = 14;
       // 
       // subScripts
@@ -4872,7 +4874,7 @@ namespace Assistant
       this.subScripts.Location = new System.Drawing.Point(4, 24);
       this.subScripts.Name = "subScripts";
       this.subScripts.Padding = new System.Windows.Forms.Padding(3);
-      this.subScripts.Size = new System.Drawing.Size(566, 379);
+      this.subScripts.Size = new System.Drawing.Size(566, 481);
       this.subScripts.TabIndex = 0;
       this.subScripts.Text = "Scripts";
       // 
@@ -4886,7 +4888,7 @@ namespace Assistant
       this.copyPosition.TabIndex = 30;
       this.copyPosition.Text = "Position";
       this.copyPosition.UseVisualStyleBackColor = true;
-      this.copyPosition.Click += new System.EventHandler(this.copyPosition_Click);      
+      this.copyPosition.Click += new System.EventHandler(this.copyPosition_Click);
       // 
       // scriptHotkey
       // 
@@ -4917,7 +4919,7 @@ namespace Assistant
       // 
       this.scriptSplitContainer.Panel2.Controls.Add(this.scriptDocMap);
       this.scriptSplitContainer.Panel2.Controls.Add(this.scriptEditor);
-      this.scriptSplitContainer.Size = new System.Drawing.Size(487, 352);
+      this.scriptSplitContainer.Size = new System.Drawing.Size(487, 454);
       this.scriptSplitContainer.SplitterDistance = 127;
       this.scriptSplitContainer.SplitterWidth = 10;
       this.scriptSplitContainer.TabIndex = 28;
@@ -4929,7 +4931,7 @@ namespace Assistant
             | System.Windows.Forms.AnchorStyles.Right)));
       this.scriptTree.Location = new System.Drawing.Point(0, 31);
       this.scriptTree.Name = "scriptTree";
-      this.scriptTree.Size = new System.Drawing.Size(127, 321);
+      this.scriptTree.Size = new System.Drawing.Size(127, 423);
       this.scriptTree.Sorted = true;
       this.scriptTree.TabIndex = 29;
       this.scriptTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.scriptTree_AfterSelect);
@@ -4952,9 +4954,9 @@ namespace Assistant
             | System.Windows.Forms.AnchorStyles.Right)));
       this.scriptDocMap.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(38)))), ((int)(((byte)(37)))), ((int)(((byte)(56)))));
       this.scriptDocMap.ForeColor = System.Drawing.Color.Maroon;
-      this.scriptDocMap.Location = new System.Drawing.Point(203, -4);
+      this.scriptDocMap.Location = new System.Drawing.Point(197, -4);
       this.scriptDocMap.Name = "scriptDocMap";
-      this.scriptDocMap.Size = new System.Drawing.Size(120, 356);
+      this.scriptDocMap.Size = new System.Drawing.Size(120, 458);
       this.scriptDocMap.TabIndex = 22;
       this.scriptDocMap.Target = null;
       // 
@@ -4996,7 +4998,7 @@ namespace Assistant
       this.scriptEditor.SelectionColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(255)))));
       this.scriptEditor.ServiceColors = ((FastColoredTextBoxNS.ServiceColors)(resources.GetObject("scriptEditor.ServiceColors")));
       this.scriptEditor.ShowCaretWhenInactive = false;
-      this.scriptEditor.Size = new System.Drawing.Size(201, 352);
+      this.scriptEditor.Size = new System.Drawing.Size(195, 454);
       this.scriptEditor.TabIndex = 21;
       this.scriptEditor.Zoom = 100;
       this.scriptEditor.KeyDown += new System.Windows.Forms.KeyEventHandler(this.scriptEditor_KeyDown);
@@ -5007,7 +5009,7 @@ namespace Assistant
       // 
       this.scriptGuide.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
       this.scriptGuide.AutoSize = true;
-      this.scriptGuide.Location = new System.Drawing.Point(500, 333);
+      this.scriptGuide.Location = new System.Drawing.Point(500, 435);
       this.scriptGuide.Name = "scriptGuide";
       this.scriptGuide.Size = new System.Drawing.Size(60, 26);
       this.scriptGuide.TabIndex = 26;
@@ -5653,7 +5655,7 @@ namespace Assistant
       this.advancedTab.Controls.Add(this.subAdvancedTab);
       this.advancedTab.Location = new System.Drawing.Point(4, 44);
       this.advancedTab.Name = "advancedTab";
-      this.advancedTab.Size = new System.Drawing.Size(587, 416);
+      this.advancedTab.Size = new System.Drawing.Size(587, 548);
       this.advancedTab.TabIndex = 12;
       this.advancedTab.Text = "Advanced";
       // 
@@ -5668,7 +5670,7 @@ namespace Assistant
       this.subAdvancedTab.Location = new System.Drawing.Point(6, 3);
       this.subAdvancedTab.Name = "subAdvancedTab";
       this.subAdvancedTab.SelectedIndex = 0;
-      this.subAdvancedTab.Size = new System.Drawing.Size(574, 407);
+      this.subAdvancedTab.Size = new System.Drawing.Size(574, 539);
       this.subAdvancedTab.TabIndex = 0;
       this.subAdvancedTab.SelectedIndexChanged += new System.EventHandler(this.subAdvancedTab_SelectedIndexChanged);
       // 
@@ -5690,7 +5692,7 @@ namespace Assistant
       this.advancedInfoTab.Location = new System.Drawing.Point(4, 24);
       this.advancedInfoTab.Name = "advancedInfoTab";
       this.advancedInfoTab.Padding = new System.Windows.Forms.Padding(3);
-      this.advancedInfoTab.Size = new System.Drawing.Size(566, 379);
+      this.advancedInfoTab.Size = new System.Drawing.Size(566, 511);
       this.advancedInfoTab.TabIndex = 0;
       this.advancedInfoTab.Text = "Information";
       // 
@@ -5867,7 +5869,7 @@ namespace Assistant
       this.features.Name = "features";
       this.features.ReadOnly = true;
       this.features.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-      this.features.Size = new System.Drawing.Size(323, 175);
+      this.features.Size = new System.Drawing.Size(323, 307);
       this.features.TabIndex = 83;
       this.features.Visible = false;
       // 
@@ -6293,10 +6295,22 @@ namespace Assistant
       this.aboutVer.Text = "Razor v{0}";
       this.aboutVer.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
       // 
+      // lblCurrentPosition
+      // 
+      this.lblCurrentPosition.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+      this.lblCurrentPosition.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+      this.lblCurrentPosition.Location = new System.Drawing.Point(500, 515);
+      this.lblCurrentPosition.Name = "lblCurrentPosition";
+      this.lblCurrentPosition.Size = new System.Drawing.Size(76, 17);
+      this.lblCurrentPosition.TabIndex = 15;
+      this.lblCurrentPosition.Text = "1720 933 7";
+      this.lblCurrentPosition.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+      this.lblCurrentPosition.Click += new System.EventHandler(this.lblCurrentPosition_Click);
+      // 
       // MainForm
       // 
       this.AutoScaleBaseSize = new System.Drawing.Size(6, 16);
-      this.ClientSize = new System.Drawing.Size(598, 466);
+      this.ClientSize = new System.Drawing.Size(598, 598);
       this.Controls.Add(this.tabs);
       this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
       this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -6620,5 +6634,6 @@ namespace Assistant
         private Label lblCooldownWidth;
     private Button agentB7;
     private Button copyPosition;
+    private Label lblCurrentPosition;
   }
 }

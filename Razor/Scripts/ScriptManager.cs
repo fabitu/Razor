@@ -503,7 +503,22 @@ namespace Assistant.Scripts
 
     public static RazorScript GetScript(string scriptName)
     {
-      return _scriptList.FirstOrDefault(x => x.Name.Equals(scriptName, StringComparison.OrdinalIgnoreCase));
+      RazorScript result = null;
+      // Get the directory (path)
+      string directory = Path.GetDirectoryName(scriptName);
+
+      // Get the file or last part of the path (name)
+      string name = Path.GetFileName(scriptName);
+      if (!string.IsNullOrEmpty(directory))
+      {
+        result = _scriptList.FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase) && x.Category.Equals(directory, StringComparison.OrdinalIgnoreCase));
+      }
+      else
+      {
+        result = _scriptList.FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+      }
+
+      return result;
     }
 
     private static int GetScriptIndex(string script)

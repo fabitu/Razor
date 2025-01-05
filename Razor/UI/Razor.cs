@@ -716,7 +716,7 @@ namespace Assistant
       }
       else if (tabs.SelectedTab == advancedTab)
       {
-        UpdateRazorStatus();
+        UpdateRazorStatusFromAdvancedTab();
       }
       else if (tabs.SelectedTab == macrosTab)
       {
@@ -735,6 +735,7 @@ namespace Assistant
       else if (tabs.SelectedTab == scriptsTab)
       {
         RedrawScripts();
+        UpdateRazorStatusFromScriptTab();
       }
       else if (tabs.SelectedTab == friendsTab)
       {
@@ -808,11 +809,12 @@ namespace Assistant
 
       protected override void OnTick()
       {
-        m_Form.UpdateRazorStatus();
+        m_Form.UpdateRazorStatusFromAdvancedTab();
+        m_Form.UpdateRazorStatusFromScriptTab();
       }
     }
 
-    private void UpdateRazorStatus()
+    private void UpdateRazorStatusFromAdvancedTab()
     {
       if (!Client.Instance.ClientRunning)
         Close();
@@ -897,7 +899,25 @@ namespace Assistant
         }
       }
     }
+    private void UpdateRazorStatusFromScriptTab()
+    {
+      if (!Client.Instance.ClientRunning)
+        Close();
 
+      tabs.SafeAction(s =>
+      {
+        if (s.SelectedTab != scriptsTab)
+        {
+          return;
+        }
+      });
+
+      lblCurrentPosition.SafeAction(s =>
+      {
+        if (World.Player != null)
+          lblCurrentPosition.SafeAction(x => x.Text = $"{World.Player.Position.X} {World.Player.Position.Y} {World.Player.Position.Z}");
+      });
+    }
     public void UpdateSkill(Skill skill)
     {
       double total = 0;
@@ -2963,6 +2983,7 @@ namespace Assistant
       if (rs != null)
       {
         scriptTree.SelectedNode = FindScriptNode(scriptTree.Nodes, rs.Category);
+        scriptTree.SelectedNode?.Expand();
       }
     }
 
@@ -6676,6 +6697,23 @@ namespace Assistant
       Config.SetProperty("AutoSaveScript", autoSaveScript.Checked);
     }
 
+    private void CopyScriptPathToClipboard(object sender, EventArgs e)
+    {
+      RazorScript script = GetScriptSel();
+      if (script == null)
+        return;
+
+      try
+      {
+        Clipboard.SetText($"call '{script}'");
+      }
+      catch
+      {
+        MessageBox.Show(this, Language.GetString(LocString.ReadError), "Copy Error", MessageBoxButtons.OK,
+            MessageBoxIcon.Error);
+      }
+    }
+
     private void CopyScriptToClipboard(object sender, EventArgs e)
     {
       RazorScript script = GetScriptSel();
@@ -7476,6 +7514,7 @@ namespace Assistant
           m_ScriptContextMenu.Items.Add($"Delete '{selScript.Name}'", null, DeleteScript);
           m_ScriptContextMenu.Items.Add("-");
           m_ScriptContextMenu.Items.Add($"Open '{selScript.Name}' externally", null, OpenScriptExternally);
+          m_ScriptContextMenu.Items.Add("Copy Script path to clipboard", null, CopyScriptPathToClipboard);
           m_ScriptContextMenu.Items.Add("Copy to clipboard", null, CopyScriptToClipboard);
         }
 
@@ -8210,7 +8249,17 @@ namespace Assistant
     }
     private void copyPosition_Click(object sender, EventArgs e)
     {
-      Clipboard.SetText($"walkto {World.Player.Position.X} {World.Player.Position.Y} {World.Player.Position.Z}");
+      var text = $@"while not insysmsg 'Você chegou ao destino!'
+  clearsysmsg
+  walkto {World.Player.Position.X} {World.Player.Position.Y} {World.Player.Position.Z} 500
+endwhile";
+
+      Clipboard.SetText(text);
+    }
+
+    private void lblCurrentPosition_Click(object sender, EventArgs e)
+    {
+      Clipboard.SetText($"{World.Player.Position.X} {World.Player.Position.Y} {World.Player.Position.Z}");
     }
   }
 }
