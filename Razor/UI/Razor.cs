@@ -915,7 +915,10 @@ namespace Assistant
       lblCurrentPosition.SafeAction(s =>
       {
         if (World.Player != null)
-          lblCurrentPosition.SafeAction(x => x.Text = $"{World.Player.Position.X} {World.Player.Position.Y} {World.Player.Position.Z}");
+          lblCurrentPosition.SafeAction(x => x.Text = $"Cordinates: X:{World.Player.Position.X} Y:{World.Player.Position.Y} Z:{World.Player.Position.Z}");
+
+        if (World.Mobiles != null)
+          lblMobs.SafeAction(x => x.Text = $"Mobs: {World.Mobiles.Count()}");
       });
     }
     public void UpdateSkill(Skill skill)
@@ -8223,7 +8226,6 @@ namespace Assistant
     {
       Config.SetProperty("DisableScriptStopwatch", disableScriptStopwatch.Checked);
     }
-
     private void cooldownHeight_TextChanged(object sender, EventArgs e)
     {
       int height = Utility.ToInt32(cooldownHeight.Text, 28);
@@ -8235,7 +8237,6 @@ namespace Assistant
 
       Config.SetProperty("CooldownHeight", height);
     }
-
     private void cooldownWidth_TextChanged(object sender, EventArgs e)
     {
       int width = Utility.ToInt32(cooldownWidth.Text, 110);
@@ -8256,10 +8257,19 @@ endwhile";
 
       Clipboard.SetText(text);
     }
-
     private void lblCurrentPosition_Click(object sender, EventArgs e)
     {
       Clipboard.SetText($"{World.Player.Position.X} {World.Player.Position.Y} {World.Player.Position.Z}");
     }
+
+    private void lblMobs_Click(object sender, EventArgs e)
+    {
+      var sb = new StringBuilder();
+      foreach (var mobile in World.Mobiles.Values)
+      {
+        sb.AppendLine($"{mobile.Serial},{mobile.Name}");
+      }
+      Clipboard.SetText($"{sb}");
+    }       
   }
 }

@@ -240,6 +240,7 @@
     <Compile Include="Core\Overrides.cs" />
     <Compile Include="Core\SystemMessages.cs" />
     <Compile Include="Core\TextFilterManager.cs" />
+    <Compile Include="Filters\TreeStaticFilter.cs" />
     <Compile Include="Gumps\Gump.cs" />
     <Compile Include="Gumps\GumpButtonType.cs" />
     <Compile Include="Gumps\GumpCollection.cs" />

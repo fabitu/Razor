@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using Ultima;
 
 namespace Assistant
 {
@@ -28,14 +29,26 @@ namespace Assistant
     private static Dictionary<Serial, Mobile> m_Mobiles;
     private static PlayerData m_Player;
     private static string m_ShardName, m_PlayerName, m_AccountName;
-    private static Dictionary<ushort, string> m_Servers;    
+    private static Dictionary<ushort, string> m_Servers;
+    public static List<ItemDataDto> ItemData;
+    public static List<LandDataDto> LandData;
+
 
     static World()
     {
+      System.Diagnostics.Debugger.Launch();
       m_Servers = new Dictionary<ushort, string>();
       m_Items = new Dictionary<Serial, Item>();
       m_Mobiles = new Dictionary<Serial, Mobile>();
       m_ShardName = "[None]";
+      //InitTileData();
+    }
+
+    private static void InitTileData()
+    {
+      TileData.Initialize();
+      ItemData = TileData.GetItemDataDto();
+      LandData = TileData.GetLandDataDto();
     }
 
     internal static Dictionary<ushort, string> Servers

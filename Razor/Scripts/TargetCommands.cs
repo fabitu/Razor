@@ -189,7 +189,7 @@ namespace Assistant.Scripts
 
       if (vars.Length < 2)
       {
-        throw new RunTimeError("Usage: targetrelloc (x-offset) (y-offset)");
+        throw new RunTimeError("Usage: targetrelloc (x-offset) (y-offset) [defaultID]");
       }
 
       int xoffset = Utility.ToInt32(vars[0].AsString(), 0);

@@ -21,6 +21,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.Remoting.Channels;
 using System.Text;
 using System.Threading;
 using Assistant.Core;
@@ -1123,6 +1125,7 @@ namespace Assistant.Scripts
       int y = vars[1].AsInt();
       int z = vars.Length < 3 ? 0 : vars[2].AsInt();
       int timeout = vars.Length < 4 ? 5 : vars[3].AsInt();
+      int steps = vars.Length < 5 ? 1 : vars[4].AsInt();
 
       var destination = new Point3D(x, y, z);
       var firstPosition = World.Player.Position;
@@ -1138,23 +1141,17 @@ namespace Assistant.Scripts
       int deltaZ = destination.Z - firstPosition.Z;
 
       // Limita o movimento em no máximo 1 unidades por eixo
-      int moveX = Clamp(deltaX, -1, 1);
-      int moveY = Clamp(deltaY, -1, 1);
-      int moveZ = Clamp(deltaZ, -1, 1);
+      int moveX = Clamp(deltaX, steps);
+      int moveY = Clamp(deltaY, steps);
+      int moveZ = Clamp(deltaZ, steps);
 
       var newLocation = new Point3D(firstPosition.X + moveX, firstPosition.Y + moveY, firstPosition.Z + moveZ);
+
+      CheckNextPosition(newLocation);
+
       var packet = new PathFindTo(newLocation);
-      Client.Instance.SendToClient(packet);
-      Interpreter.Timeout(timeout, () =>
-      {
-        if (destination.Equals(firstPosition))
-        {
-          World.Player?.SendMessage($"Você chegou ao destino!");
-          Interpreter.ClearTimeout();
-          return true;
-        }
-        return true;
-      });
+      var teste = Client.Instance.SendToClient(packet);
+      var teste2 = Client.Instance.SendToServer(packet);
 
       var currentPosition = World.Player.Position;
       var result = destination.Equals(currentPosition);
@@ -1162,24 +1159,160 @@ namespace Assistant.Scripts
       {
         World.Player?.SendMessage($"Você chegou ao destino!");
       }
-      else if (firstPosition.Equals(World.Player.Position))//Não andou
-      {
-        var doors = World.Items.Values.Where(s => s.IsDoor &&
-                                        s.Position.X == newLocation.X &&
-                                        s.Position.Y == newLocation.Y &&
-                                        s.Position.Z - 15 <= z &&
-                                        s.Position.Z + 15 >= z);
-        if (doors.Any())
-        {         
-          PlayerData.OpenDoor(false, doors);
-        }
-      }
 
+      TimeOut(timeout, destination, firstPosition);
       return result;
     }
 
-    private static int Clamp(int value, int min, int max)
+
+    public static bool OldWalkTo(string command, Variable[] vars, bool quiet, bool force)
     {
+      if (vars.Length < 2)
+      {
+        throw new RunTimeError("Usage: Walkto (X) (Y) [z, default 0] [timeout, default 5s]");
+      }
+      int x = vars[0].AsInt();
+      int y = vars[1].AsInt();
+      int z = vars.Length < 3 ? 0 : vars[2].AsInt();
+      int timeout = vars.Length < 4 ? 5 : vars[3].AsInt();
+      int steps = vars.Length < 5 ? 1 : vars[4].AsInt();
+
+      var destination = new Point3D(x, y, z);
+      var firstPosition = World.Player.Position;
+      if (destination.Equals(firstPosition))
+      {
+        CommandHelper.SendInfo($"Você chegou ao destino!", quiet);
+        return true;
+      }
+
+      // Calcula a diferença entre o destino e a posição atual
+      int deltaX = destination.X - firstPosition.X;
+      int deltaY = destination.Y - firstPosition.Y;
+      int deltaZ = destination.Z - firstPosition.Z;
+
+      // Limita o movimento em no máximo 1 unidades por eixo
+      int moveX = Clamp(deltaX, steps);
+      int moveY = Clamp(deltaY, steps);
+      int moveZ = Clamp(deltaZ, steps);
+
+      var newLocation = new Point3D(firstPosition.X + moveX, firstPosition.Y + moveY, firstPosition.Z + moveZ);
+
+      CheckNextPosition(newLocation);
+
+      var packet = new PathFindTo(newLocation);
+      var teste = Client.Instance.SendToClient(packet);
+      var teste2 = Client.Instance.SendToServer(packet);
+
+      var currentPosition = World.Player.Position;
+      var result = destination.Equals(currentPosition);
+      if (result)
+      {
+        World.Player?.SendMessage($"Você chegou ao destino!");
+      }
+
+      TimeOut(timeout, destination, firstPosition);
+      return result;
+    }
+    private static void CheckNextPosition(Point3D newLocation)
+    {
+      ExecuteActionByItem(newLocation);
+      ExecuteActionByMobile(newLocation);
+    }
+
+    private static void TimeOut(int timeout, Point3D destination, Point3D firstPosition)
+    {
+      Interpreter.Timeout(timeout, () =>
+      {
+        return true;
+      });
+    }
+
+    private static void ExecuteActionByItem(Point3D newLocation)
+    {
+      var item = World.Items.Values.FirstOrDefault(s => s.Position.X == newLocation.X &&
+                                              s.Position.Y == newLocation.Y &&
+                                              s.Position.Z - 15 <= newLocation.Z &&
+                                              s.Position.Z + 15 >= newLocation.Z);
+      if (item != null)
+      {
+        Stopwatch sw = new Stopwatch();
+
+
+        if (item.IsDoor)
+        {
+          if (!DClick("DClick", new Variable[] { new Variable(item.Serial.ToString()) }, false, false))
+          {
+            PlayerData.OpenDoor(false, new List<Item>() { item });
+          }
+        }
+        else if (item.IsContainer)
+        {
+          sw.Start();
+          LiftItem("LiftItem", new Variable[] { new Variable(item.Serial.ToString()) }, false, false);
+          World.Player?.SendMessage($"Demorou Lift {sw.Elapsed.TotalMilliseconds}");
+          sw.Reset();
+          if (!DropItem("DropItem", new Variable[] { new Variable(item.Serial.ToString()), new Variable("self"), new Variable("InnerTorso") }, false, false))
+          {
+            Deviate();
+          }
+          sw.Stop();
+          World.Player?.SendMessage($"Demorou Drop {sw.Elapsed.TotalMilliseconds}");
+        }
+
+      }
+    }
+
+    private static void Deviate()
+    {
+      switch (World.Player.Direction)
+      {
+        case Direction.North:
+          InternalWalk("East", 2);
+          break;
+        case Direction.East:
+          InternalWalk("North", 2);
+          break;
+        case Direction.South:
+          InternalWalk("East", 2);
+          break;
+        case Direction.West:
+          InternalWalk("North", 2);
+          break;
+        default:
+          break;
+      }
+    }
+
+    private static void InternalWalk(string direction, int times = 1)
+    {
+      for (int i = 0; i < times; i++)
+      {
+        Walk("Walk", new Variable[] { new Variable($"{direction}") }, false, false);
+      }
+    }
+
+    private static void ExecuteActionByMobile(Point3D newLocation)
+    {
+      var mobile = World.Mobiles.Values.FirstOrDefault(s => s.Position.X == newLocation.X &&
+                                              s.Position.Y == newLocation.Y &&
+                                              s.Position.Z - 15 <= newLocation.Z &&
+                                              s.Position.Z + 15 >= newLocation.Z);
+      if (mobile != null)
+      {
+        if (mobile.IsHuman)
+        {
+          Deviate();
+        }
+        else if (mobile.IsMonster)
+        {
+          SpeechCommands.Say("Say", new Variable[] { new Variable("Guards") }, false, false);
+        }
+      }
+    }
+
+    private static int Clamp(int value, int max)
+    {
+      var min = max * -1;
       if (value < min) return min;
       if (value > max) return max;
       return value;

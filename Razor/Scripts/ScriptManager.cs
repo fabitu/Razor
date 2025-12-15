@@ -778,7 +778,7 @@ namespace Assistant.Scripts
           "usetype 'dagger'\n\twaitfortarget\n\ttargettype 'robe'\n\tuseobject 0x4005ECAF\n\twaitfortarget\n\ttargettype 0x1f03\n\tuseobject 0x4005ECAF\n\twaitfortarget\n\ttargettype 0x1f03 true");
       descriptionCommands.Add("targettype", tooltip);
 
-      tooltip = new ToolTipDescriptions("targetrelloc", new[] { "targetrelloc (x-offset) (y-offset)" }, "N/A",
+      tooltip = new ToolTipDescriptions("targetrelloc", new[] { "targetrelloc (x-offset) (y-offset) [default ID]" }, "N/A",
           "This command will target a specific location on the map relative to your position.",
           "cast 'fire field'\n\twaitfortarget\n\ttargetrelloc 1 1");
       descriptionCommands.Add("targetrelloc", tooltip);

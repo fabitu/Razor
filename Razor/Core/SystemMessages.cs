@@ -21,84 +21,86 @@ using System.Collections.Generic;
 
 namespace Assistant.Core
 {
-    public static class SystemMessages
+  public static class SystemMessages
+  {
+    public static List<string> Messages { get; } = new List<string>();
+
+    public static void Initialize()
     {
-        public static List<string> Messages { get; } = new List<string>();
-        
-        public static void Initialize()
-        {
-            MessageManager.OnSystemMessage += HandleSystemMessage;
-        }
-        
-        private static void HandleSystemMessage(Packet p, PacketHandlerEventArgs args, Serial source, ushort graphic,
-            MessageType type, ushort hue, ushort font, string lang, string sourceName,
-            string text)
-        {
-            if (source == Serial.MinusOne && sourceName == "System")
-            {
-                if (Config.GetBool("FilterSnoopMsg") && text.IndexOf(World.Player.Name) == -1 &&
-                    text.StartsWith("You notice") && text.IndexOf("attempting to peek into") != -1 &&
-                    text.IndexOf("belongings") != -1)
-                {
-                    args.Block = true;
-                    return;
-                }
-
-                if (text.StartsWith("You've committed a criminal act") || text.StartsWith("You are now a criminal"))
-                {
-                    World.Player.ResetCriminalTimer();
-                }
-
-                // Overhead message override
-                OverheadManager.DisplayOverheadMessage(text);
-            }
-
-            if (!source.IsValid || source == World.Player.Serial || source.IsItem)
-            {
-                Add(text);
-            }
-
-            if (Config.GetBool("FilterSystemMessages") && source == Serial.MinusOne || source == Serial.Zero)
-            {
-                if (!MessageQueue.Enqueue(source, null, graphic, type, hue, font, lang, sourceName, text))
-                {
-                    args.Block = true;
-                }
-            }
-        }
-
-        public static void Add(string text)
-        {
-            if (string.IsNullOrEmpty(text))
-            {
-                return;
-            }
-
-            Messages.Add(text);
-
-            if (Messages.Count >= 100)
-            {
-                Messages.RemoveRange(0, 10);
-            }
-        }
-
-        public static bool Exists(string text)
-        {
-            if (string.IsNullOrEmpty(text))
-            {
-                return false;
-            }
-
-            for (int i = Messages.Count - 1; i >= 0; i--)
-            {
-                if (Messages[i].IndexOf(text, StringComparison.OrdinalIgnoreCase) != -1)
-                {
-                    Messages.RemoveRange(0, i + 1);
-                    return true;
-                }
-            }
-
-            return false;
-        }
+      MessageManager.OnSystemMessage += HandleSystemMessage;
     }
+
+    private static void HandleSystemMessage(Packet p, PacketHandlerEventArgs args, Serial source, ushort graphic,
+        MessageType type, ushort hue, ushort font, string lang, string sourceName,
+        string text)
+    {
+      if (source == Serial.MinusOne && sourceName == "System")
+      {
+        if (Config.GetBool("FilterSnoopMsg") && text.IndexOf(World.Player.Name) == -1 &&
+            text.StartsWith("You notice") && text.IndexOf("attempting to peek into") != -1 &&
+            text.IndexOf("belongings") != -1)
+        {
+          args.Block = true;
+          return;
+        }
+
+        if (text.StartsWith("You've committed a criminal act") || text.StartsWith("You are now a criminal"))
+        {
+          World.Player.ResetCriminalTimer();
+        }
+
+        // Overhead message override
+        OverheadManager.DisplayOverheadMessage(text);
+      }
+
+      if (!source.IsValid || source == World.Player.Serial || source.IsItem)
+      {
+        Add(text);
+      }
+
+      if (Config.GetBool("FilterSystemMessages") && source == Serial.MinusOne || source == Serial.Zero)
+      {
+        if (!MessageQueue.Enqueue(source, null, graphic, type, hue, font, lang, sourceName, text))
+        {
+          args.Block = true;
+        }
+      }
+    }
+
+    public static void Add(string text)
+    {
+      if (string.IsNullOrEmpty(text))
+      {
+        return;
+      }
+
+      Messages.Add(text);
+
+      if (Messages.Count >= 100)
+      {
+        Messages.RemoveRange(0, 10);
+      }
+    }
+
+    public static bool Exists(string text)
+    {
+      if (string.IsNullOrEmpty(text))
+      {
+        return false;
+      }
+      var _text = text.Split(new string[] { "|" }, StringSplitOptions.RemoveEmptyEntries);
+      for (int i = Messages.Count - 1; i >= 0; i--)
+      {        
+        for (int j = 0; j < _text.Length; j++)
+        {
+          if (Messages[i].IndexOf(_text[j], StringComparison.OrdinalIgnoreCase) != -1)
+          {
+            Messages.RemoveRange(0, i + 1);
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+  }
 }

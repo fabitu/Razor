@@ -65,7 +65,7 @@ namespace Assistant
         public static bool IsOSI;
 
         internal static void Init(bool isOSI)
-        {
+        {      
             IsOSI = isOSI;
 
             if (isOSI)
@@ -146,12 +146,12 @@ namespace Assistant
 
         public abstract bool OnCopyData(IntPtr wparam, IntPtr lparam);
 
-        public abstract void SendToServer(Packet p);
+        public abstract bool SendToServer(Packet p);
 
-        public abstract void SendToServer(PacketReader pr);
+        public abstract bool SendToServer(PacketReader pr);
 
-        public abstract void SendToClient(Packet p);
-        public abstract void SendPacketToClient(byte[] packet, int length);
+        public abstract bool SendToClient(Packet p);
+        public abstract bool SendPacketToClient(byte[] packet, int length);
 
         public abstract void ForceSendToClient(Packet p);
 
