@@ -435,7 +435,7 @@ namespace Assistant
     StunSuccessful,
     StunDisabled,
     StunFailed,
-    AllCorpses,
+    AllCorpses,    
     AllMobiles,
     BullSounds,
     DragonSounds,
@@ -592,10 +592,11 @@ namespace Assistant
     PauseScript,
     ResumeScriptMessage,
     PauseScriptMessage,
-    ScriptFinishedStopwatch,
+    ScriptFinishedStopwatch,    
     SellDelay,
     HotBagIsEmpty,
     ItemIdNotFound,
+    OpenAllCorpses,
     __End
   }
 

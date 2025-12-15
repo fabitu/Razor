@@ -833,3 +833,4 @@ InputBox::ok=&OK
 2127=Sell Delay '{0}'
 2128=There is nothing in HotBag!
 2129=ItemId: {0} not found!
+2130=Open All Corpses
