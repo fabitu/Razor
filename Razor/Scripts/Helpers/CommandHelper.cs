@@ -200,7 +200,7 @@ namespace Assistant.Scripts.Helpers
         var findContainer = World.FindItem(container);
         if (findContainer != null)
         {
-          var itens = findContainer.Contains.Where(x => (x.ItemID == id || x.ItemID.Value == id) && Interpreter.CheckIgnored(x.Serial)).ToList();
+          var itens = findContainer.Contains.Where(x => x.ItemID == id  && !Interpreter.CheckIgnored(x.Serial)).ToList();
           items.AddRange(itens);
         }
       }
