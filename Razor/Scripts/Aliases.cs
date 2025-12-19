@@ -20,77 +20,87 @@ using Assistant.Scripts.Engine;
 
 namespace Assistant.Scripts
 {
-    public static class Aliases
+  public static class Aliases
+  {
+    public static void Register()
     {
-        public static void Register()
-        {
-            Interpreter.RegisterAliasHandler("backpack", Backpack);
-            Interpreter.RegisterAliasHandler("last", Last);
-            Interpreter.RegisterAliasHandler("lasttarget", Last);
-            Interpreter.RegisterAliasHandler("lastobject", LastObject);
-            Interpreter.RegisterAliasHandler("self", Self);
-            Interpreter.RegisterAliasHandler("righthand", RightHand);
-            Interpreter.RegisterAliasHandler("lefthand", LeftHand);
-            Interpreter.RegisterAliasHandler("hand", Hand);
-        }
-
-        private static uint RightHand(string alias)
-        {
-            Item item = World.Player.GetItemOnLayer(Layer.RightHand);
-
-            return World.Player != null && item != null
-                ? (uint) item.Serial
-                : 0;
-        }
-
-        private static uint LeftHand(string alias)
-        {
-            Item item = World.Player.GetItemOnLayer(Layer.LeftHand);
-
-            return World.Player != null && item != null
-                ? (uint)item.Serial
-                : 0;
-        }
-
-        private static uint Hand(string alias)
-        {
-            Item item = World.Player.GetItemOnLayer(Layer.RightHand) ?? World.Player.GetItemOnLayer(Layer.LeftHand);
-
-            return World.Player != null && item != null
-                ? (uint)item.Serial
-                : 0;
-        }
-
-        private static uint Backpack(string alias)
-        {
-            if (World.Player == null || World.Player.Backpack == null)
-                return 0;
-
-            return World.Player.Backpack.Serial;
-        }
-
-        private static uint Last(string alias)
-        {
-            if (Targeting.LastTargetInfo != null)
-                return Targeting.LastTargetInfo.Serial;
-
-            return 0;
-        }
-
-        private static uint LastObject(string alias)
-        {
-            if (World.Player.LastObject != null)
-                return World.Player.LastObject;
-
-            return 0;
-        }
-
-        private static uint Self(string alias)
-        {
-            if (World.Player == null)
-                return 0;
-
-            return World.Player.Serial;
-        }
+      Interpreter.RegisterAliasHandler("bank", Bank);
+      Interpreter.RegisterAliasHandler("backpack", Backpack);
+      Interpreter.RegisterAliasHandler("last", Last);
+      Interpreter.RegisterAliasHandler("lasttarget", Last);
+      Interpreter.RegisterAliasHandler("lastobject", LastObject);
+      Interpreter.RegisterAliasHandler("self", Self);
+      Interpreter.RegisterAliasHandler("righthand", RightHand);
+      Interpreter.RegisterAliasHandler("lefthand", LeftHand);
+      Interpreter.RegisterAliasHandler("hand", Hand);
     }
+
+    private static uint RightHand(string alias)
+    {
+      Item item = World.Player.GetItemOnLayer(Layer.RightHand);
+
+      return World.Player != null && item != null
+          ? (uint)item.Serial
+          : 0;
+    }
+
+    private static uint LeftHand(string alias)
+    {
+      Item item = World.Player.GetItemOnLayer(Layer.LeftHand);
+
+      return World.Player != null && item != null
+          ? (uint)item.Serial
+          : 0;
+    }
+
+    private static uint Hand(string alias)
+    {
+      Item item = World.Player.GetItemOnLayer(Layer.RightHand) ?? World.Player.GetItemOnLayer(Layer.LeftHand);
+
+      return World.Player != null && item != null
+          ? (uint)item.Serial
+          : 0;
+    }
+
+    private static uint Bank(string alias)
+    {
+      if (World.Player == null || World.Player.Bank == null)
+        return 0;
+
+      return World.Player.Bank.Serial;
+    }
+
+
+    private static uint Backpack(string alias)
+    {
+      if (World.Player == null || World.Player.Backpack == null)
+        return 0;
+
+      return World.Player.Backpack.Serial;
+    }
+
+    private static uint Last(string alias)
+    {
+      if (Targeting.LastTargetInfo != null)
+        return Targeting.LastTargetInfo.Serial;
+
+      return 0;
+    }
+
+    private static uint LastObject(string alias)
+    {
+      if (World.Player.LastObject != null)
+        return World.Player.LastObject;
+
+      return 0;
+    }
+
+    private static uint Self(string alias)
+    {
+      if (World.Player == null)
+        return 0;
+
+      return World.Player.Serial;
+    }
+  }
 }

@@ -17,6 +17,8 @@
 #endregion
 
 using Assistant.Scripts.Engine;
+using Assistant.Scripts.Helpers;
+using System;
 
 namespace Assistant.Scripts
 {
@@ -40,11 +42,11 @@ namespace Assistant.Scripts
       {
         throw new RunTimeError("Usage: say ('text') [color]");
       }
-
+      var msg = CommandHelper.ReplaceStringInterpolations(vars[0].AsString());
       if (vars.Length == 1)
-        World.Player.Say(Config.GetInt("SysColor"), vars[0].AsString());
+        World.Player.Say(Config.GetInt("SysColor"), msg);
       else
-        World.Player.Say(Utility.ToInt32(vars[1].AsString(), 0), vars[0].AsString());
+        World.Player.Say(Utility.ToInt32(vars[1].AsString(), 0), msg);
 
       return true;
     }
@@ -57,11 +59,11 @@ namespace Assistant.Scripts
       }
 
       MessageType type = MessageType.Whisper & ~MessageType.Encoded;
-
+      var msg = CommandHelper.ReplaceStringInterpolations(vars[0].AsString());
       if (vars.Length == 1)
-        World.Player.Whisper(vars[0].AsString(), World.Player.SpeechHue);
+        World.Player.Whisper(msg, World.Player.SpeechHue);
       else
-        World.Player.Whisper(vars[0].AsString(), Utility.ToInt32(vars[1].AsString(), 0));
+        World.Player.Whisper(msg, Utility.ToInt32(vars[1].AsString(), 0));
 
       return true;
     }
@@ -72,11 +74,11 @@ namespace Assistant.Scripts
       {
         throw new RunTimeError("Usage: yell ('text') [color]");
       }
-
+      var msg = CommandHelper.ReplaceStringInterpolations(vars[0].AsString());
       if (vars.Length == 1)
-        World.Player.Yell(vars[0].AsString(), World.Player.SpeechHue);
+        World.Player.Yell(msg, World.Player.SpeechHue);
       else
-        World.Player.Yell(vars[0].AsString(), Utility.ToInt32(vars[1].AsString(), 0));
+        World.Player.Yell(msg, Utility.ToInt32(vars[1].AsString(), 0));
 
       return true;
     }
@@ -87,11 +89,12 @@ namespace Assistant.Scripts
       {
         throw new RunTimeError("Usage: emote ('text') [color]");
       }
+      var msg = CommandHelper.ReplaceStringInterpolations(vars[0].AsString());
 
       if (vars.Length == 1)
-        World.Player.Emote(vars[0].AsString(), World.Player.SpeechHue);
+        World.Player.Emote(msg, World.Player.SpeechHue);
       else
-        World.Player.Emote(vars[0].AsString(), Utility.ToInt32(vars[1].AsString(), 0));
+        World.Player.Emote(msg, Utility.ToInt32(vars[1].AsString(), 0));
 
       return true;
     }
@@ -102,11 +105,11 @@ namespace Assistant.Scripts
       {
         throw new RunTimeError("Usage: guild ('text')");
       }
-
+      var msg = CommandHelper.ReplaceStringInterpolations(vars[0].AsString());
       if (vars.Length == 1)
-        World.Player.Guild(vars[0].AsString(), World.Player.SpeechHue);
+        World.Player.Guild(msg, World.Player.SpeechHue);
       else
-        World.Player.Guild(vars[0].AsString(), Utility.ToInt32(vars[1].AsString(), 0));
+        World.Player.Guild(msg, Utility.ToInt32(vars[1].AsString(), 0));
 
       return true;
     }
@@ -117,11 +120,11 @@ namespace Assistant.Scripts
       {
         throw new RunTimeError("Usage: alliance ('text')");
       }
-
+      var msg = CommandHelper.ReplaceStringInterpolations(vars[0].AsString());
       if (vars.Length == 1)
-        World.Player.Alliance(vars[0].AsString(), World.Player.SpeechHue);
+        World.Player.Alliance(msg, World.Player.SpeechHue);
       else
-        World.Player.Alliance(vars[0].AsString(), Utility.ToInt32(vars[1].AsString(), 0));
+        World.Player.Alliance(msg, Utility.ToInt32(vars[1].AsString(), 0));
 
       return true;
     }

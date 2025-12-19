@@ -579,7 +579,7 @@ namespace Assistant.Scripts
       string[] commands =
       {
                 "alliance", "call", "clearall", "cleardragdrop", "clearhands", "emote", "guild", "attack", "interrupt", "virtue", "yell",
-                "cast", "dclick", "dclicktype",
+                "cast", "dclick", "dclicktype","usetype",
                 "dress", "drop", "droprelloc", "gumpresponse", "gumpclose", "hotkey", "lasttarget", "lift", "lifttype",
                 "menu", "menuresponse", "organizer", "overhead", "pickup","potion", "promptresponse", "restock", "say",
                 "whisper", "yell", "emote", "script", "scavenger", "sell", "setability", "setlasttarget", "setvar",
@@ -624,6 +624,13 @@ namespace Assistant.Scripts
           "This command will use (double-click) an item type either provided by the name or the graphic ID.\n\t\tIf you include the optional true parameter, items within range (2 tiles) will only be considered.",
           "dclicktype 'dagger'\n\t\twaitfortarget\n\t\ttargettype 'robe'");
       descriptionCommands.Add("dclicktype", tooltip);
+
+      tooltip = new ToolTipDescriptions("usetype",
+      new[] { "usetype ('name of item') OR (graphicID) [inrange] or usetype ('name of item') OR (graphicID) [inrange/backpack] [hue]" },
+        "N/A",
+        "This command will use (double-click) an item type either provided by the name or the graphic ID.\n\t\tIf you include the optional true parameter, items within range (2 tiles) will only be considered.",
+        "dclicktype 'dagger'\n\t\twaitfortarget\n\t\ttargettype 'robe'");
+      descriptionCommands.Add("usetype", tooltip);
 
       tooltip = new ToolTipDescriptions("dress", new[] { "dress ('name of dress list')" }, "N/A",
           "This command will execute a spec dress list you have defined in Razor.", "dress 'My Sunday Best'");

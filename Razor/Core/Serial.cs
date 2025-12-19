@@ -29,7 +29,7 @@ namespace Assistant
         public static readonly Serial MinusOne = new Serial(0xFFFFFFFF);
         public static readonly Serial Zero = new Serial(0);
 
-        private Serial(uint serial)
+        public Serial(uint serial)
         {
             m_Serial = serial;
         }

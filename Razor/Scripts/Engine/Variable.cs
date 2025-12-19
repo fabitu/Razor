@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace Assistant.Scripts.Engine
 {
@@ -91,6 +92,12 @@ namespace Assistant.Scripts.Engine
 
       if (resolve)
       {
+        //if (_value.Equals("bank", StringComparison.OrdinalIgnoreCase))
+        //{
+        //  var serial = World.Player?.Bank?.Serial.Value.ToString();
+        //  if (serial != null)
+        //    return serial;
+        //}
         // Try to resolve it as a scoped variable first
         var arg = Interpreter.GetVariable(_value);
         if (arg != null)

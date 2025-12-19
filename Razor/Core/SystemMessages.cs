@@ -82,7 +82,7 @@ namespace Assistant.Core
       }
     }
 
-    public static bool Exists(string text)
+    public static bool Exists(string text, bool remove = false)
     {
       if (string.IsNullOrEmpty(text))
       {
@@ -90,12 +90,15 @@ namespace Assistant.Core
       }
       var _text = text.Split(new string[] { "|" }, StringSplitOptions.RemoveEmptyEntries);
       for (int i = Messages.Count - 1; i >= 0; i--)
-      {        
+      {
         for (int j = 0; j < _text.Length; j++)
         {
           if (Messages[i].IndexOf(_text[j], StringComparison.OrdinalIgnoreCase) != -1)
           {
-            Messages.RemoveRange(0, i + 1);
+            if (remove)
+            {
+              Messages.RemoveRange(0, i + 1);
+            }
             return true;
           }
         }

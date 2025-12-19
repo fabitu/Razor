@@ -16,20 +16,23 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endregion
 
+using Assistant.Core;
+using Assistant.HotKeys;
+using Assistant.Scripts.Engine;
+using Assistant.Scripts.Helpers;
+using Assistant.UI;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.ConstrainedExecution;
 using System.Runtime.Remoting.Channels;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
-using Assistant.Core;
-using Assistant.HotKeys;
-using Assistant.Scripts.Engine;
-using Assistant.Scripts.Helpers;
-using Assistant.UI;
+using System.Windows.Forms;
 using Ultima;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Tab;
 
@@ -81,8 +84,6 @@ namespace Assistant.Scripts
 
       // Hotkey execution
       Interpreter.RegisterCommandHandler("hotkey", Hotkey); //HotKeyAction
-
-
 
       Interpreter.RegisterCommandHandler("overhead", OverheadMessage); //OverheadMessageAction
       Interpreter.RegisterCommandHandler("headmsg", OverheadMessage); //OverheadMessageAction
@@ -681,15 +682,27 @@ namespace Assistant.Scripts
       }
 
       string name = vars[0].AsString(false);
+      string serialStr = string.Empty;
+      bool useString = false;
 
       if (vars.Length == 2)
       {
         // No need to target anything. We have the serial.
         var serial = vars[1].AsSerial();
+        if (serial == Serial.MinusOne)
+        {
+          serialStr = vars[1].AsString();
+          useString = true;
+        }
 
         if (force)
         {
-          Interpreter.SetVariable(name, serial.ToString(), true);
+          if (!useString)
+            Interpreter.SetVariable(name, serial.ToString(), true);
+          else
+          {
+            Interpreter.SetVariable(name, serialStr, true);
+          }
           return true;
         }
 
@@ -971,59 +984,84 @@ namespace Assistant.Scripts
 
       bool inRangeCheck = false;
       bool backpack = false;
+      bool bank = false;
+      bool useSerial = false;
       int hue = -1;
-
-      if (vars.Length > 1)
+      Item item = null;
+      if (vars.Length == 1)
+      {
+        if (vars[0].AsSerial() != Serial.MinusOne)
+        {
+          item = World.FindItem(vars[0].AsSerial());
+          if (item != null)
+            useSerial = true;
+        }
+      }
+      else if (vars.Length > 1)
       {
         if (vars.Length == 3)
         {
           hue = vars[2].AsInt();
         }
 
-        if (vars[1].AsString().IndexOf("pack", StringComparison.OrdinalIgnoreCase) > 0)
-        {
-          backpack = true;
-        }
         else
         {
-          inRangeCheck = vars[1].AsBool();
+          if (vars[1].AsString().IndexOf("pack", StringComparison.OrdinalIgnoreCase) > 0)
+          {
+            backpack = true;
+          }
+          else if (vars[1].AsString().Equals("bank", StringComparison.OrdinalIgnoreCase))
+          {
+            bank = true;
+          }
+          else
+          {
+            inRangeCheck = vars[1].AsBool();
+          }
         }
       }
 
-      // No graphic id, maybe searching by name?
-      if (gfx == 0)
+      if (useSerial)
       {
-        items = CommandHelper.GetItemsByName(gfxStr, backpack, inRangeCheck, hue);
-
-        if (items.Count == 0) // no item found, search mobile by name
-        {
-          mobiles = CommandHelper.GetMobilesByName(gfxStr, inRangeCheck);
-        }
-      }
-      else // Provided graphic id for type, check backpack first (same behavior as DoubleClickAction in macros
-      {
-        ushort id = Utility.ToUInt16(gfxStr, 0);
-
-        items = CommandHelper.GetItemsById(id, backpack, inRangeCheck, hue);
-
-        // Still no item? Mobile check!
-        if (items.Count == 0)
-        {
-          mobiles = CommandHelper.GetMobilesById(id, inRangeCheck);
-        }
-      }
-
-      if (items.Count > 0)
-      {
-        PlayerData.DoubleClick(items[Utility.Random(items.Count)].Serial);
-      }
-      else if (mobiles.Count > 0)
-      {
-        PlayerData.DoubleClick(mobiles[Utility.Random(mobiles.Count)].Serial);
+        PlayerData.DoubleClick(item.Serial);
       }
       else
       {
-        CommandHelper.SendWarning(command, $"Item or mobile type '{gfxStr}' not found", quiet);
+        // No graphic id, maybe searching by name?
+        if (gfx == 0)
+        {
+          items = CommandHelper.GetItemsByName(gfxStr, backpack, bank, inRangeCheck, hue);
+
+          if (items.Count == 0) // no item found, search mobile by name
+          {
+            mobiles = CommandHelper.GetMobilesByName(gfxStr, inRangeCheck);
+          }
+        }
+        else // Provided graphic id for type, check backpack first (same behavior as DoubleClickAction in macros
+        {
+          ushort id = Utility.ToUInt16(gfxStr, 0);
+
+          items = CommandHelper.GetItemsById(id, backpack, bank, inRangeCheck, hue);
+
+          // Still no item? Mobile check!
+          if (items.Count == 0)
+          {
+            mobiles = CommandHelper.GetMobilesById(id, inRangeCheck);
+          }
+        }
+
+        if (items.Count > 0)
+        {
+          PlayerData.DoubleClick(items[Utility.Random(items.Count)].Serial);
+        }
+        else if (mobiles.Count > 0)
+        {
+          PlayerData.DoubleClick(mobiles[Utility.Random(mobiles.Count)].Serial);
+        }
+        else
+        {
+          CommandHelper.SendWarning(command, $"Item or mobile type '{gfxStr}' not found", quiet);
+        }
       }
 
       return true;
@@ -1085,92 +1123,137 @@ namespace Assistant.Scripts
       }
       string gfxStr = vars[0].AsString();
       ushort gfx = Utility.ToUInt16(gfxStr, 0);
-      var fromBagSerial = vars[1].AsSerial();
-      var toBag = vars[2].AsString().IndexOf("pack", StringComparison.OrdinalIgnoreCase) > 0 ? World.Player.Backpack : World.FindItem(vars[2].AsSerial());
+      var fromBagSerial = vars[1].AsString().Equals("bank", StringComparison.OrdinalIgnoreCase) ?
+        World.Player.Bank.Serial.Value : vars[1].AsSerial();
+
+      fromBagSerial = vars[1].AsString().Equals("pack", StringComparison.OrdinalIgnoreCase) ?
+        World.Player.Backpack.Serial.Value : vars[1].AsSerial();
+
+      var toBag = vars[2].AsString().IndexOf("pack", StringComparison.OrdinalIgnoreCase) > 0 ?
+        World.Player.Backpack : World.FindItem(vars[2].AsSerial());
+
+      toBag = vars[2].AsString().IndexOf("bank", StringComparison.OrdinalIgnoreCase) > 0 ?
+          World.Player.Bank : World.FindItem(vars[2].AsSerial());
+
       var count = vars.Length < 4 ? 1 : vars[3].AsInt();
       var delay = vars.Length < 5 ? 100 : vars[4].AsInt();
+      bool debug = vars.Length < 6 ? false : Convert.ToBoolean(vars[5].AsInt());
       var fromBag = World.FindItem(fromBagSerial);
       if (fromBag == null || !fromBag.Contains.Any())
       {
         World.Player.SendMessage("From bag not found or isEmpty!");
         return false;
       }
-      if (toBag == null || !toBag.Contains.Any())
+
+      if (toBag == null)
       {
-        World.Player.SendMessage("To bag not found! or isEmpty");
+        World.Player.SendMessage("To bag not found!");
         return false;
       }
 
-      for (int i = 0; i < count; i++)
-      {
-        var itens = fromBag.Contains.Where(x => x.ItemID == (ItemID)gfx).ToList();
-        if (itens.Count == 0)
-          break;
-        DragDropManager.DragDrop(itens[0], 1, toBag);
+
+      var itens = fromBag.Contains.Where(x => x.ItemID == (ItemID)gfx).ToList();
+      if (itens.Count == 0)
+        return true;
+
+      int amount = count == -1 ? itens[0].Amount : Math.Min(count, itens[0].Amount);
+      DragDropManager.DragDrop(itens[0], amount, toBag);
+      if (debug)
         World.Player.SendMessage("Item Moved");
-        System.Threading.Thread.Sleep(delay);
-        fromBag = World.FindItem(fromBagSerial);
-      }
+      System.Threading.Thread.Sleep(delay);
+      fromBag = World.FindItem(fromBagSerial);
+
+
 
       return true;
     }
 
+    private static bool Walk(string command, Variable[] vars, bool quiet, bool force)
+    {
+      if (vars.Length < 1)
+      {
+        throw new RunTimeError("Usage: walk ('direction')");
+      }
+
+      if (ScriptManager.LastWalk + TimeSpan.FromSeconds(0.4) >= DateTime.UtcNow)
+      {
+        return false;
+      }
+
+      ScriptManager.LastWalk = DateTime.UtcNow;
+
+      Direction dir = (Direction)Enum.Parse(typeof(Direction), vars[0].AsString(), true);
+      Client.Instance.RequestMove(dir);
+
+      return true;
+    }
     public static bool WalkTo(string command, Variable[] vars, bool quiet, bool force)
     {
       if (vars.Length < 2)
       {
         throw new RunTimeError("Usage: Walkto (X) (Y) [z, default 0] [timeout, default 5s]");
       }
+
+      if (ScriptManager.LastWalk + TimeSpan.FromSeconds(0.4) >= DateTime.UtcNow)
+      {
+        return false;
+      }
+
       int x = vars[0].AsInt();
       int y = vars[1].AsInt();
       int z = vars.Length < 3 ? 0 : vars[2].AsInt();
       int timeout = vars.Length < 4 ? 5 : vars[3].AsInt();
-      int steps = vars.Length < 5 ? 1 : vars[4].AsInt();
+      //int steps = vars.Length < 5 ? 1 : vars[4].AsInt();
+      int steps = 1;
+      bool debug = vars.Length < 5 ? false : Convert.ToBoolean(vars[4].AsInt());
 
       var destination = new Point3D(x, y, z);
-      var firstPosition = World.Player.Position;
-      if (destination.Equals(firstPosition))
+      var beforeWalkPosition = World.Player.Position;
+      if (destination.Equals(beforeWalkPosition))
       {
-        CommandHelper.SendInfo($"Você chegou ao destino!", quiet);
+        CommandHelper.SendInfo($"Você já esta no seu destino!", quiet);
         return true;
       }
 
       // Calcula a diferença entre o destino e a posição atual
-      int deltaX = destination.X - firstPosition.X;
-      int deltaY = destination.Y - firstPosition.Y;
-      int deltaZ = destination.Z - firstPosition.Z;
+      int deltaX = destination.X - beforeWalkPosition.X;
+      int deltaY = destination.Y - beforeWalkPosition.Y;
+      int deltaZ = destination.Z - beforeWalkPosition.Z;
 
       // Limita o movimento em no máximo 1 unidades por eixo
       int moveX = Clamp(deltaX, steps);
       int moveY = Clamp(deltaY, steps);
       int moveZ = Clamp(deltaZ, steps);
 
-      var newLocation = new Point3D(firstPosition.X + moveX, firstPosition.Y + moveY, firstPosition.Z + moveZ);
-
+      var newLocation = new Point3D(beforeWalkPosition.X + moveX, beforeWalkPosition.Y + moveY, beforeWalkPosition.Z + moveZ);
       CheckNextPosition(newLocation);
+      var direction = GetNextDirectionNameTo(newLocation);
 
-      var packet = new PathFindTo(newLocation);
-      var teste = Client.Instance.SendToClient(packet);
-      var teste2 = Client.Instance.SendToServer(packet);
+      InternalWalk(direction);
 
-      var currentPosition = World.Player.Position;
-      var result = destination.Equals(currentPosition);
-      if (result)
+      var afterWalkPosition = World.Player.Position;
+      var afterWalkDirection = World.Player.Direction;
+      var result = destination.Equals(afterWalkPosition);
+
+      if (result && debug)
       {
         World.Player?.SendMessage($"Você chegou ao destino!");
       }
 
-      TimeOut(timeout, destination, firstPosition);
       return result;
     }
-
-
     public static bool OldWalkTo(string command, Variable[] vars, bool quiet, bool force)
     {
       if (vars.Length < 2)
       {
         throw new RunTimeError("Usage: Walkto (X) (Y) [z, default 0] [timeout, default 5s]");
       }
+
+      if (ScriptManager.LastWalk + TimeSpan.FromSeconds(0.4) >= DateTime.UtcNow)
+      {
+        return false;
+      }
+
       int x = vars[0].AsInt();
       int y = vars[1].AsInt();
       int z = vars.Length < 3 ? 0 : vars[2].AsInt();
@@ -1178,53 +1261,86 @@ namespace Assistant.Scripts
       int steps = vars.Length < 5 ? 1 : vars[4].AsInt();
 
       var destination = new Point3D(x, y, z);
-      var firstPosition = World.Player.Position;
-      if (destination.Equals(firstPosition))
+      var beforeWalkPosition = World.Player.Position;
+      var beforeWalkDirection = World.Player.Direction;
+      if (destination.Equals(beforeWalkPosition))
       {
         CommandHelper.SendInfo($"Você chegou ao destino!", quiet);
         return true;
       }
 
       // Calcula a diferença entre o destino e a posição atual
-      int deltaX = destination.X - firstPosition.X;
-      int deltaY = destination.Y - firstPosition.Y;
-      int deltaZ = destination.Z - firstPosition.Z;
+      int deltaX = destination.X - beforeWalkPosition.X;
+      int deltaY = destination.Y - beforeWalkPosition.Y;
+      int deltaZ = destination.Z - beforeWalkPosition.Z;
 
       // Limita o movimento em no máximo 1 unidades por eixo
       int moveX = Clamp(deltaX, steps);
       int moveY = Clamp(deltaY, steps);
       int moveZ = Clamp(deltaZ, steps);
 
-      var newLocation = new Point3D(firstPosition.X + moveX, firstPosition.Y + moveY, firstPosition.Z + moveZ);
-
+      var newLocation = new Point3D(beforeWalkPosition.X + moveX, beforeWalkPosition.Y + moveY, beforeWalkPosition.Z + moveZ);
       CheckNextPosition(newLocation);
 
-      var packet = new PathFindTo(newLocation);
-      var teste = Client.Instance.SendToClient(packet);
-      var teste2 = Client.Instance.SendToServer(packet);
+      ScriptManager.LastWalk = DateTime.UtcNow;
 
-      var currentPosition = World.Player.Position;
-      var result = destination.Equals(currentPosition);
-      if (result)
+      SendWalkPacket(newLocation);
+      var afterWalkPosition = World.Player.Position;
+      var afterWalkDirection = World.Player.Direction;
+      var result = false;
+      if (beforeWalkDirection.Equals(afterWalkDirection) && afterWalkPosition.Equals(beforeWalkPosition))
       {
-        World.Player?.SendMessage($"Você chegou ao destino!");
+        World.Player?.SendMessage($"Não Andou, Tentando Desviar");
+        Deviate();
+      }
+      else
+      {
+        result = destination.Equals(afterWalkPosition);
+        if (result)
+        {
+          World.Player?.SendMessage($"Você chegou ao destino!");
+        }
       }
 
-      TimeOut(timeout, destination, firstPosition);
       return result;
     }
+
+    public static string GetNextDirectionNameTo(Point3D newLocation)
+    {
+      int px = World.Player.Position.X;
+      int py = World.Player.Position.Y;
+
+      int dx = newLocation.X - px;
+      int dy = newLocation.Y - py;
+
+      if (dx == 0 && dy < 0) return "North";
+      if (dx == 0 && dy > 0) return "South";
+      if (dx > 0 && dy == 0) return "East";
+      if (dx < 0 && dy == 0) return "West";
+
+      if (dx > 0 && dy < 0) return "Right"; // NE
+      if (dx > 0 && dy > 0) return "Down";  // SE
+      if (dx < 0 && dy > 0) return "Left";  // SW
+      return "Up";                          // NW
+    }
+
     private static void CheckNextPosition(Point3D newLocation)
     {
       ExecuteActionByItem(newLocation);
       ExecuteActionByMobile(newLocation);
     }
 
-    private static void TimeOut(int timeout, Point3D destination, Point3D firstPosition)
+    private static void SendWalkPacket(Point3D newLocation)
     {
-      Interpreter.Timeout(timeout, () =>
-      {
-        return true;
-      });
+      var packet = new PathFindTo(newLocation);
+      Client.Instance.SendToClient(packet);
+      Client.Instance.SendToServer(packet);
+      Thread.Sleep(500);
+    }
+
+    private static void TimeOut(int timeout)
+    {
+      Interpreter.Timeout(timeout, () => { return true; });
     }
 
     private static void ExecuteActionByItem(Point3D newLocation)
@@ -1543,25 +1659,7 @@ namespace Assistant.Scripts
       return false;
     }
 
-    private static bool Walk(string command, Variable[] vars, bool quiet, bool force)
-    {
-      if (vars.Length < 1)
-      {
-        throw new RunTimeError("Usage: walk ('direction')");
-      }
 
-      if (ScriptManager.LastWalk + TimeSpan.FromSeconds(0.4) >= DateTime.UtcNow)
-      {
-        return false;
-      }
-
-      ScriptManager.LastWalk = DateTime.UtcNow;
-
-      Direction dir = (Direction)Enum.Parse(typeof(Direction), vars[0].AsString(), true);
-      Client.Instance.RequestMove(dir);
-
-      return true;
-    }
 
     private static bool UseSkill(string command, Variable[] vars, bool quiet, bool force)
     {
@@ -1607,37 +1705,66 @@ namespace Assistant.Scripts
       return true;
     }
 
+
     private static bool Pause(string command, Variable[] vars, bool quiet, bool force)
     {
       if (vars.Length == 0)
-        throw new RunTimeError("Usage: wait (timeout) [shorthand]");
+        throw new RunTimeError("Usage: wait (timeout)");
 
-      uint timeout = vars[0].AsUInt();
+      string raw = vars[0].AsString().Trim().ToLowerInvariant();
 
-      if (vars.Length == 2)
+      // separa número e sufixo
+      int i = 0;
+      while (i < raw.Length && char.IsDigit(raw[i]))
+        i++;
+
+      if (i == 0)
+        throw new RunTimeError("Invalid timeout value");
+
+      uint timeout = uint.Parse(raw.Substring(0, i));
+      timeout = CommandHelper.SetTimeOut(raw, i, timeout);
+
+      if (vars.Length > 1)
       {
-        switch (vars[1].AsString())
-        {
-          case "s":
-          case "sec":
-          case "secs":
-          case "second":
-          case "seconds":
-            timeout *= 1000;
-            break;
-          case "m":
-          case "min":
-          case "mins":
-          case "minute":
-          case "minutes":
-            timeout *= 60000;
-            break;
-        }
+        var message = Convert.ToString(vars[1].AsString());
+        World.Player?.SendMessage(CommandHelper.ReplaceStringInterpolations(message));
       }
 
       Interpreter.Pause(timeout);
 
       return true;
+    }
+
+
+
+    public static string ParseMessageWithDate(string message)
+    {
+      if (string.IsNullOrEmpty(message))
+        return message;
+
+      // [d:FORMAT] ou [d:]
+      var match = Regex.Match(message, @"\[d:(?<format>[^\]]*)\]");
+      if (!match.Success)
+        return message;
+
+      var format = match.Groups["format"].Value;
+      if (string.IsNullOrWhiteSpace(format))
+        format = "HH:mm:ss";
+
+      // remove o token e injeta a data (interpolação)
+      var cleaned = Regex.Replace(message, @"\[d:[^\]]*\]", string.Empty);
+      string dateText;
+      try
+      {
+        dateText = DateTime.Now.ToString(format);
+      }
+      catch
+      {
+        dateText = DateTime.Now.ToString(format);
+      }
+
+
+      return $"{dateText} - {cleaned}";
     }
 
     private static bool Attack(string command, Variable[] vars, bool quiet, bool force)
@@ -1745,7 +1872,6 @@ namespace Assistant.Scripts
 
       return true;
     }
-
     private static bool ClearSysMsg(string command, Variable[] vars, bool quiet, bool force)
     {
       SystemMessages.Messages.Clear();

@@ -35,8 +35,7 @@ namespace Assistant
 
 
     static World()
-    {
-      System.Diagnostics.Debugger.Launch();
+    {      
       m_Servers = new Dictionary<ushort, string>();
       m_Items = new Dictionary<Serial, Item>();
       m_Mobiles = new Dictionary<Serial, Mobile>();
@@ -45,10 +44,17 @@ namespace Assistant
     }
 
     private static void InitTileData()
-    {
-      TileData.Initialize();
-      ItemData = TileData.GetItemDataDto();
-      LandData = TileData.GetLandDataDto();
+    {//TODO: Não funciona em mapas customizados
+      try
+      {
+        TileData.Initialize();
+        ItemData = TileData.GetItemDataDto();
+        LandData = TileData.GetLandDataDto();
+      }
+      catch (Exception ex)
+      {
+        
+      }      
     }
 
     internal static Dictionary<ushort, string> Servers

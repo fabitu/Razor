@@ -770,7 +770,7 @@ namespace Assistant.Scripts.Engine
       var handler = Interpreter.GetExpressionHandler(node.Lexeme);
 
       if (handler == null)
-        throw new RunTimeError("Unknown expression");
+        throw new RunTimeError("Unknown expression, check is not a command");
 
       var result = handler(node.Lexeme, ConstructArguments(ref node), quiet, force);
 

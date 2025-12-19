@@ -16,6 +16,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endregion
 
+using Assistant.Macros;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -364,14 +365,28 @@ namespace Assistant.Scripts.Engine
           statement.Push(AllowLoop ? ASTNodeType.REPLAY : ASTNodeType.STOP, null, _curLine);
           break;
         case "call":
-          if (lexemes.Length > 2)
+          if (lexemes.Length > 3)
             throw new SyntaxError(node, "Script compilation error");
+          bool hasParameters = false;
+          if (lexemes.Length == 3)//has parameters
+          {
+            hasParameters = true;
+          }
 
           var script = ScriptManager.GetScript(lexemes[1]);
           if (script == null)
           {
             throw new SyntaxError(node, $"Script {lexemes[1]} not found!");
           }
+          else if (hasParameters)
+          {
+            var parameters = lexemes[2];
+            string parametersValues = string.Join("|", parameters.Split('|')
+              .Select(p => Interpreter.GetVariable(p)?.AsString() ?? p));
+
+            ReplaceSetVarIndexes(script.Lines, parametersValues);
+          }
+
           Lex(node, script.Lines);
 
           break;
@@ -384,6 +399,39 @@ namespace Assistant.Scripts.Engine
             ParseValue(statement, lexeme, ASTNodeType.STRING);
           }
           break;
+      }
+    }
+
+    public static void ReplaceSetVarIndexes(IList<string> lines, string valuesPipe)
+    {
+      var values = (valuesPipe ?? "").Split('|');
+      var y = 0;
+      for (int i = 0; i < lines.Count; i++)
+      {
+        if (y >= values.Length)
+          break;
+
+        var line = lines[i];
+        if (string.IsNullOrWhiteSpace(line))
+          continue;
+
+        var trimmed = line.TrimStart();
+
+        if (!trimmed.StartsWith("@setvar!", StringComparison.OrdinalIgnoreCase))
+          continue;
+
+        var parts = trimmed.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length < 3 || !parts[1].StartsWith("PAR"))
+          continue;
+
+        int last = parts.Length - 1;
+
+        if (!int.TryParse(parts[last], out int idx))
+          continue;       
+
+        parts[last] = values[y];
+        lines[i] = string.Join(" ", parts);
+        y++;
       }
     }
 

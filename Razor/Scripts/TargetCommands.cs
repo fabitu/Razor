@@ -16,10 +16,12 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endregion
 
-using System;
-using System.Collections.Generic;
 using Assistant.Scripts.Engine;
 using Assistant.Scripts.Helpers;
+using System;
+using System.Collections.Generic;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
+using static Ultima.FrameEdit;
 
 namespace Assistant.Scripts
 {
@@ -124,6 +126,7 @@ namespace Assistant.Scripts
 
       bool inRangeCheck = false;
       bool backpack = false;
+      bool bank = false;
       int hue = -1;
 
       if (vars.Length > 1)
@@ -137,6 +140,10 @@ namespace Assistant.Scripts
         {
           backpack = true;
         }
+        else if (vars[1].AsString().Equals("bank", StringComparison.OrdinalIgnoreCase))
+        {
+          bank = true;
+        }
         else
         {
           inRangeCheck = vars[1].AsBool();
@@ -146,7 +153,7 @@ namespace Assistant.Scripts
       // No graphic id, maybe searching by name?
       if (gfx == 0)
       {
-        items = CommandHelper.GetItemsByName(gfxStr, backpack, inRangeCheck, hue);
+        items = CommandHelper.GetItemsByName(gfxStr, backpack, bank, inRangeCheck, hue);
 
         if (items.Count == 0) // no item found, search mobile by name
         {
@@ -157,7 +164,7 @@ namespace Assistant.Scripts
       {
         ushort id = Utility.ToUInt16(gfxStr, 0);
 
-        items = CommandHelper.GetItemsById(id, backpack, inRangeCheck, hue);
+        items = CommandHelper.GetItemsById(id, backpack, bank, inRangeCheck, hue);
 
         // Still no item? Mobile check!
         if (items.Count == 0)
@@ -202,7 +209,7 @@ namespace Assistant.Scripts
 
       try
       {
-        Ultima.HuedTile tile = Map.GetTileNear(World.Player.Map, x, y, z, defaultId);        
+        Ultima.HuedTile tile = Map.GetTileNear(World.Player.Map, x, y, z, defaultId);
         Targeting.Target(new Point3D(x, y, tile.Z), tile.ID);
       }
       catch (Exception e)
@@ -240,6 +247,21 @@ namespace Assistant.Scripts
       {
         Interpreter.ClearTimeout();
         return true;
+      }
+      if (vars.Length > 0)
+      {
+        string raw = vars[0].AsString().Trim().ToLowerInvariant();
+
+        // separa número e sufixo
+        int i = 0;
+        while (i < raw.Length && char.IsDigit(raw[i]))
+          i++;
+
+        if (i == 0)
+          throw new RunTimeError("Invalid timeout value");
+
+        uint timeout = uint.Parse(raw.Substring(0, i));
+        timeout = CommandHelper.SetTimeOut(raw, i, timeout);        
       }
 
       Interpreter.Timeout(vars.Length > 0 ? vars[0].AsUInt() : 30000, () => { return true; });

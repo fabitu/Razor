@@ -36,6 +36,7 @@ namespace Assistant
   {
     public static unsafe void Install(PluginHeader* plugin)
     {
+      //System.Diagnostics.Debugger.Launch();
       Application.EnableVisualStyles();
       Application.SetCompatibleTextRenderingDefault(false);
 

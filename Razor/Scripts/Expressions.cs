@@ -16,12 +16,13 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endregion
 
-using System;
-using System.Collections.Generic;
 using Assistant.Core;
 using Assistant.Scripts.Engine;
 using Assistant.Scripts.Helpers;
+using System;
+using System.Collections.Generic;
 using Ultima;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
 
 namespace Assistant.Scripts
 {
@@ -63,6 +64,7 @@ namespace Assistant.Scripts
       Interpreter.RegisterExpressionHandler("insysmessage", InSysMessage);
 
       Interpreter.RegisterExpressionHandler("findtype", FindType);
+      Interpreter.RegisterExpressionHandler("findcount", FindCount);
 
       Interpreter.RegisterExpressionHandler("findbuff", FindBuffDebuff);
       Interpreter.RegisterExpressionHandler("finddebuff", FindBuffDebuff);
@@ -261,7 +263,7 @@ namespace Assistant.Scripts
     {
       if (vars.Length == 0)
       {
-        throw new RunTimeError("Usage: findtype ('name of item'/'graphicID) [inrangecheck (true/false)/backpack] [hue]");
+        throw new RunTimeError("Usage: findtype ('name of item'/'graphicID) [inrangecheck (true/false)/backpack/bank] [hue]");
       }
 
       string gfxStr = vars[0].AsString();
@@ -271,6 +273,7 @@ namespace Assistant.Scripts
 
       bool inRangeCheck = false;
       bool backpack = false;
+      bool bank = false;
       int hue = -1;
 
       if (vars.Length > 1)
@@ -284,6 +287,10 @@ namespace Assistant.Scripts
         {
           backpack = true;
         }
+        else if (vars[1].AsString().Equals("bank", StringComparison.OrdinalIgnoreCase))
+        {
+          bank = true;
+        }
         else
         {
           inRangeCheck = vars[1].AsBool();
@@ -293,7 +300,7 @@ namespace Assistant.Scripts
       // No graphic id, maybe searching by name?
       if (gfx == 0)
       {
-        items = CommandHelper.GetItemsByName(gfxStr, backpack, inRangeCheck, hue);
+        items = CommandHelper.GetItemsByName(gfxStr, backpack, bank, inRangeCheck, hue);
 
         if (items.Count == 0) // no item found, search mobile by name
         {
@@ -313,7 +320,7 @@ namespace Assistant.Scripts
       {
         ushort id = Utility.ToUInt16(gfxStr, 0);
 
-        items = CommandHelper.GetItemsById(id, backpack, inRangeCheck, hue);
+        items = CommandHelper.GetItemsById(id, backpack, bank, inRangeCheck, hue);
 
         // Still no item? Mobile check!
         if (items.Count == 0)
@@ -334,6 +341,66 @@ namespace Assistant.Scripts
       return Serial.Zero;
     }
 
+    private static int FindCount(string expression, Variable[] vars, bool quiet, bool force)
+    {
+      if (vars.Length == 0)
+      {
+        throw new RunTimeError("Usage: findtype ('name of item'/'graphicID) [container/backpack/bank] [hue]");
+      }
+
+      string gfxStr = vars[0].AsString();
+      Serial gfx = Utility.ToUInt16(gfxStr, 0);
+      int count;
+
+      Serial container = new Serial(0);
+      bool backpack = false;
+      bool bank = false;
+      int hue = -1;
+      string setVar = string.Empty;
+
+      if (vars.Length > 1)
+      {
+        if (vars.Length == 3)
+        {
+          if (vars[2].AsString().StartsWith("$")) //é para fazer o set da variavel
+          {
+            setVar = vars[2].AsString().TrimStart('$');
+          }
+          else
+            hue = vars[2].AsInt();
+        }
+
+        if (vars[1].AsString().IndexOf("pack", StringComparison.OrdinalIgnoreCase) > 0)
+        {
+          backpack = true;
+        }
+        else if (vars[1].AsString().Equals("bank", StringComparison.OrdinalIgnoreCase))
+        {
+          bank = true;
+        }
+        else
+        {
+          container = vars[1].AsSerial();
+        }
+      }
+
+      // No graphic id, maybe searching by name?
+      if (gfx == 0)
+      {
+        count = CommandHelper.GetTotalItemsByName(gfxStr, backpack, bank, container, hue);
+      }
+      else // Provided graphic id for type, check backpack first (same behavior as DoubleClickAction in macros
+      {
+        ushort id = Utility.ToUInt16(gfxStr, 0);
+
+        count = CommandHelper.GetTotalItemsById(id, backpack, bank, container, hue);
+      }
+
+      if (!string.IsNullOrEmpty(setVar))
+        Interpreter.SetVariable(setVar, $"{count}", true);
+
+      return count;
+    }
     private static bool Mounted(string expression, Variable[] vars, bool quiet, bool force)
     {
       return World.Player != null && World.Player.GetItemOnLayer(Layer.Mount) != null;
@@ -360,14 +427,19 @@ namespace Assistant.Scripts
 
     private static bool InSysMessage(string expression, Variable[] vars, bool quiet, bool force)
     {
+      bool remove = false;
       if (vars.Length == 0)
       {
         throw new RunTimeError("Usage: insysmsg ('text')");
       }
+      if (vars.Length > 1)
+      {
+        remove = vars[1].AsBool();
+      }
 
       string text = vars[0].AsString();
 
-      return SystemMessages.Exists(text);
+      return SystemMessages.Exists(text, remove);
     }
 
     private static int Mana(string expression, Variable[] vars, bool quiet, bool force)
@@ -513,7 +585,7 @@ namespace Assistant.Scripts
       // No graphic id, maybe searching by name?
       if (gfx == 0)
       {
-        var items = CommandHelper.GetItemsByName(gfxStr, true, false, -1);
+        var items = CommandHelper.GetItemsByName(gfxStr, true, false, false, -1);
 
         return items.Count == 0 ? 0 : Counter.GetCount(items[0].ItemID, hue);
       }

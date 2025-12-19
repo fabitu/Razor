@@ -16,18 +16,20 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endregion
 
+using Assistant.Filters;
+using Assistant.Scripts.Engine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using Assistant.Filters;
-using Assistant.Scripts.Engine;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
 
 namespace Assistant.Scripts.Helpers
 {
   public static class CommandHelper
   {
+
     /// <summary>
     /// Common logic for dclicktype and targettype to find items by name
     /// </summary>
@@ -36,13 +38,107 @@ namespace Assistant.Scripts.Helpers
     /// <param name="inRange"></param>
     /// <param name="hue"></param>
     /// <returns></returns>
-    public static List<Item> GetItemsByName(string name, bool backpack, bool inRange, int hue)
+    public static int GetTotalItemsByName(string name, bool backpack, bool bank, Serial container, int hue)
     {
       List<Item> items = new List<Item>();
 
       if (backpack && World.Player.Backpack != null) // search backpack only
       {
         items.AddRange(World.Player.Backpack.FindItemsByName(name, true).Where(item => !Interpreter.CheckIgnored(item.Serial)));
+        var itemRightHand = World.Player.GetItemOnLayer(Layer.RightHand);
+        var itemLeftHand = World.Player.GetItemOnLayer(Layer.LeftHand);
+        if (itemRightHand?.Name.Equals(name) == true)
+        {
+          items.Add(itemRightHand);
+        }
+        if (itemLeftHand?.Name.Equals(name) == true)
+        {
+          items.Add(itemLeftHand);
+        }
+      }
+      else if (bank) // search backpack only
+      {
+        if (World.Player.Bank == null)
+        {
+          World.Player.Say(Config.GetInt("SysColor"), "Bank");
+        }
+        if (World.Player.Bank != null)
+          items.AddRange(World.Player.Bank.FindItemsByName(name, true).Where(item => !Interpreter.CheckIgnored(item.Serial)));
+      }
+      else
+      {
+        var findContainer = World.FindItem(container);
+        if (findContainer != null)
+        {
+          var itens = findContainer.Contains.Where(x => x.Name == name && Interpreter.CheckIgnored(x.Serial)).ToList();
+          items.AddRange(itens);
+        }
+      }
+
+      if (hue > -1)
+      {
+        items.RemoveAll(item => item.Hue != hue);
+      }
+
+      return items.Count();
+    }
+
+    public static uint SetTimeOut(string raw, int i, uint timeout)
+    {
+      string suffix = raw.Substring(i);
+
+      switch (suffix)
+      {
+        case "":
+          // default: milliseconds
+          break;
+
+        case "s":
+        case "sec":
+        case "secs":
+        case "second":
+        case "seconds":
+          timeout *= 1000;
+          break;
+
+        case "m":
+        case "min":
+        case "mins":
+        case "minute":
+        case "minutes":
+          timeout *= 60000;
+          break;
+
+        default:
+          throw new RunTimeError($"Invalid time unit: {suffix}");
+      }
+
+      return timeout;
+    }
+    /// <summary>
+    /// Common logic for dclicktype and targettype to find items by name
+    /// </summary>
+    /// <param name="name"></param>
+    /// <param name="backpack"></param>
+    /// <param name="inRange"></param>
+    /// <param name="hue"></param>
+    /// <returns></returns>
+    public static List<Item> GetItemsByName(string name, bool backpack, bool bank, bool inRange, int hue)
+    {
+      List<Item> items = new List<Item>();
+
+      if (backpack && World.Player.Backpack != null) // search backpack only
+      {
+        items.AddRange(World.Player.Backpack.FindItemsByName(name, true).Where(item => !Interpreter.CheckIgnored(item.Serial)));
+      }
+      else if (bank) // search backpack only
+      {
+        if (World.Player.Bank == null)
+        {
+          World.Player.Say(Config.GetInt("SysColor"), "Bank");
+        }
+        if (World.Player.Bank != null)
+          items.AddRange(World.Player.Bank.FindItemsByName(name, true).Where(item => !Interpreter.CheckIgnored(item.Serial)));
       }
       else if (inRange) // inrange includes both backpack and within 2 tiles
       {
@@ -63,6 +159,59 @@ namespace Assistant.Scripts.Helpers
       return items;
     }
 
+
+    /// <summary>
+    /// Common logic for dclicktype and targettype to find items by name
+    /// </summary>
+    /// <param name="name"></param>
+    /// <param name="backpack"></param>
+    /// <param name="inRange"></param>
+    /// <param name="hue"></param>
+    /// <returns></returns>
+    public static int GetTotalItemsById(ushort id, bool backpack, bool bank, Serial container, int hue)
+    {
+      List<Item> items = new List<Item>();
+
+      if (backpack && World.Player.Backpack != null) // search backpack only
+      {
+        items.AddRange(World.Player.Backpack.FindItemsById(id, true).Where(item => !Interpreter.CheckIgnored(item.Serial)));
+        var itemRightHand = World.Player.GetItemOnLayer(Layer.RightHand);
+        var itemLeftHand = World.Player.GetItemOnLayer(Layer.LeftHand);
+        if (itemRightHand?.ItemID.Equals(id) == true)
+        {
+          items.Add(itemRightHand);
+        }
+        if (itemLeftHand?.ItemID.Equals(id) == true)
+        {
+          items.Add(itemLeftHand);
+        }
+      }
+      else if (bank) // search backpack only
+      {
+        if (World.Player.Bank == null)
+        {
+          World.Player.Say(Config.GetInt("SysColor"), "Bank");
+        }
+        if (World.Player.Bank != null)
+          items.AddRange(World.Player.Bank.FindItemsById(id, true).Where(item => !Interpreter.CheckIgnored(item.Serial)));
+      }
+      else
+      {
+        var findContainer = World.FindItem(container);
+        if (findContainer != null)
+        {
+          var itens = findContainer.Contains.Where(x => (x.ItemID == id || x.ItemID.Value == id) && Interpreter.CheckIgnored(x.Serial)).ToList();
+          items.AddRange(itens);
+        }
+      }
+
+      if (hue > -1)
+      {
+        items.RemoveAll(item => item.Hue != hue);
+      }
+
+      return items.Count();
+    }
     /// <summary>
     /// Common logic for dclicktype and targettype to find items by id
     /// </summary>
@@ -71,7 +220,7 @@ namespace Assistant.Scripts.Helpers
     /// <param name="inRange"></param>
     /// <param name="hue"></param>
     /// <returns></returns>
-    public static List<Item> GetItemsById(ushort id, bool backpack, bool inRange, int hue)
+    public static List<Item> GetItemsById(ushort id, bool backpack, bool bank, bool inRange, int hue)
     {
       List<Item> items = new List<Item>();
 
@@ -81,14 +230,23 @@ namespace Assistant.Scripts.Helpers
 
         var itemRightHand = World.Player.GetItemOnLayer(Layer.RightHand);
         var itemLeftHand = World.Player.GetItemOnLayer(Layer.LeftHand);
-        if (itemRightHand?.ItemID == id)
+        if (itemRightHand?.ItemID.Equals(id) == true)
         {
           items.Add(itemRightHand);
         }
-        if (itemLeftHand?.ItemID == id)
+        if (itemLeftHand?.ItemID.Equals(id) == true)
         {
           items.Add(itemLeftHand);
-        }        
+        }
+      }
+      else if (bank) // search backpack only
+      {
+        if (World.Player.Bank == null)
+        {
+          World.Player.Say(Config.GetInt("SysColor"), "Bank");
+        }
+        if (World.Player.Bank != null)
+          items.AddRange(World.Player.Bank.FindItemsById(id, true).Where(item => !Interpreter.CheckIgnored(item.Serial)));
       }
       else if (inRange)
       {
@@ -107,6 +265,60 @@ namespace Assistant.Scripts.Helpers
       }
 
       return items;
+    }
+
+    /// <summary>
+    /// Common logic for dclicktype and targettype to find items by id
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="backpack"></param>
+    /// <param name="inRange"></param>
+    /// <param name="hue"></param>
+    /// <returns></returns>
+    public static int GetCountItemsById(ushort id, bool backpack, bool bank, Serial container, int hue)
+    {
+      List<Item> items = new List<Item>();
+
+      if (backpack && World.Player.Backpack != null)
+      {
+        items.AddRange(World.Player.Backpack.FindItemsById(id, true).Where(item => !Interpreter.CheckIgnored(item.Serial)));
+
+        var itemRightHand = World.Player.GetItemOnLayer(Layer.RightHand);
+        var itemLeftHand = World.Player.GetItemOnLayer(Layer.LeftHand);
+        if (itemRightHand?.ItemID == id)
+        {
+          items.Add(itemRightHand);
+        }
+        if (itemLeftHand?.ItemID == id)
+        {
+          items.Add(itemLeftHand);
+        }
+      }
+      else if (bank) // search backpack only
+      {
+        if (World.Player.Bank == null)
+        {
+          World.Player.Say(Config.GetInt("SysColor"), "Bank");
+        }
+        if (World.Player.Bank != null)
+          items.AddRange(World.Player.Bank.FindItemsById(id, true).Where(item => !Interpreter.CheckIgnored(item.Serial)));
+      }
+      else
+      {
+        var findContainer = World.FindItem(container);
+        if (findContainer != null)
+        {
+          var itens = findContainer.Contains.Where(x => x.ItemID == (ItemID)id && Interpreter.CheckIgnored(x.Serial)).ToList();
+          items.AddRange(itens);
+        }
+      }
+
+      if (hue > -1)
+      {
+        items.RemoveAll(item => item.Hue != hue);
+      }
+
+      return items.Count();
     }
 
     /// <summary>
@@ -846,16 +1058,71 @@ namespace Assistant.Scripts.Helpers
       }
     }
 
-    public static string ReplaceStringInterpolations(string stringWithPossibleInterpolation)
+    //public static string ReplaceStringInterpolations(string stringWithPossibleInterpolation)
+    //{
+    //  Regex regex = new Regex(@"\{{(.*?)\}}");
+    //  return regex.Replace(stringWithPossibleInterpolation, match =>
+    //  {
+    //    string varName = match.Groups[1].Value;
+    //    Variable varContent = Interpreter.GetVariable(varName);
+
+    //    return varContent?.AsString() ?? "<not found>";
+    //  });
+    //}
+
+    private static readonly Regex _dateRegex =
+     new Regex(
+         @"(\[d:(?<format1>[^\]]*)\])|(\{\{d:(?<format2>[^\}]*)\}\})",
+         RegexOptions.IgnoreCase | RegexOptions.Compiled
+     );
+
+    private static readonly Regex _varRegex =
+        new Regex(@"\{{(.*?)\}}", RegexOptions.Compiled);
+
+    public static string ReplaceStringInterpolations(string message)
     {
-      Regex regex = new Regex(@"\{{(.*?)\}}");
-      return regex.Replace(stringWithPossibleInterpolation, match =>
+      if (string.IsNullOrEmpty(message))
+        return message;
+
+      // 1) Data: [D:...] ou {{d:...}}
+      message = _dateRegex.Replace(message, m =>
+      {
+        // pega o grupo que foi preenchido
+        var format =
+            m.Groups["format1"].Success ? m.Groups["format1"].Value :
+            m.Groups["format2"].Success ? m.Groups["format2"].Value :
+            null;
+
+        if (string.IsNullOrWhiteSpace(format))
+          format = "HH:mm:ss";
+
+        return DateTime.Now.ToString(format);
+      });
+
+      // 2) Variáveis: {{VAR}}
+      message = _varRegex.Replace(message, match =>
       {
         string varName = match.Groups[1].Value;
+        var handler = Interpreter.GetExpressionHandler(varName);
+        if (handler != null)
+        {
+          try
+          {
+            var result = handler.Invoke(varName, new Variable[] { }, false, false);
+            return result.ToString();
+          }
+          catch
+          {
+          }
+        }
+
+
         Variable varContent = Interpreter.GetVariable(varName);
 
-        return varContent?.AsString() ?? "<not found>";
+        return varContent?.AsString() ?? varName;
       });
+
+      return message;
     }
   }
 }
