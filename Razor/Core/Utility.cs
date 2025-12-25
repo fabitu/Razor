@@ -404,7 +404,7 @@ namespace Assistant
                 return def;
 
             ushort val;
-            if (str.StartsWith("0x"))
+            if (str.StartsWith("0x"))//ISSerial
             {
                 if (ushort.TryParse(str.Substring(2), NumberStyles.HexNumber, Engine.Culture, out val))
                     return val;

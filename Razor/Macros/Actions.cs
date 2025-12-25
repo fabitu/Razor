@@ -3160,7 +3160,7 @@ namespace Assistant.Macros
           {
             string text = (string)m_Value;
 
-            return SystemMessages.Exists(text);
+            return SystemMessages.Exists("", text);
 
           }
 
@@ -3855,7 +3855,7 @@ namespace Assistant.Macros
           {
             string text = (string)m_Value;
 
-            return SystemMessages.Exists(text);
+            return SystemMessages.Exists("", text);
           }
 
         case WhileVarType.Mounted:
@@ -4341,7 +4341,7 @@ namespace Assistant.Macros
           {
             string text = (string)m_Value;
 
-            return SystemMessages.Exists(text);
+            return SystemMessages.Exists("", text);
           }
 
         case DoWhileVarType.Mounted:

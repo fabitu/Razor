@@ -200,7 +200,7 @@ namespace Assistant.Scripts.Helpers
         var findContainer = World.FindItem(container);
         if (findContainer != null)
         {
-          var itens = findContainer.Contains.Where(x => x.ItemID == id  && !Interpreter.CheckIgnored(x.Serial)).ToList();
+          var itens = findContainer.Contains.Where(x => x.ItemID == id && !Interpreter.CheckIgnored(x.Serial)).ToList();
           items.AddRange(itens);
         }
       }
@@ -226,17 +226,19 @@ namespace Assistant.Scripts.Helpers
 
       if (backpack && World.Player.Backpack != null)
       {
-        items.AddRange(World.Player.Backpack.FindItemsById(id, true).Where(item => !Interpreter.CheckIgnored(item.Serial)));
-
         var itemRightHand = World.Player.GetItemOnLayer(Layer.RightHand);
         var itemLeftHand = World.Player.GetItemOnLayer(Layer.LeftHand);
         if (itemRightHand?.ItemID.Equals(id) == true)
         {
           items.Add(itemRightHand);
         }
-        if (itemLeftHand?.ItemID.Equals(id) == true)
+        else if (itemLeftHand?.ItemID.Equals(id) == true)
         {
           items.Add(itemLeftHand);
+        }
+        else
+        {
+          items.AddRange(World.Player.Backpack.FindItemsById(id, true).Where(item => !Interpreter.CheckIgnored(item.Serial)));
         }
       }
       else if (bank) // search backpack only
@@ -338,6 +340,29 @@ namespace Assistant.Scripts.Helpers
       return mobiles;
     }
 
+    public static string GetNamedParameter(string input, string parameterName)
+    {
+      if (string.IsNullOrWhiteSpace(input) || string.IsNullOrWhiteSpace(parameterName))
+        return null;
+
+      var parts = input.Split(new string[] { "|" }, StringSplitOptions.RemoveEmptyEntries);
+
+      foreach (var part in parts)
+      {
+        var idx = part.IndexOf(':');
+        if (idx <= 0)
+          continue;
+
+        var name = part.Substring(0, idx).Trim();
+        if (!name.Equals(parameterName, StringComparison.OrdinalIgnoreCase))
+          continue;
+
+        return part.Substring(idx + 1).Trim();
+      }
+
+      return null;
+    }
+
     /// <summary>
     /// Common logic for dclicktype and targettype to find mobiles by id
     /// </summary>
@@ -364,7 +389,18 @@ namespace Assistant.Scripts.Helpers
         World.Player.SendMessage(MsgLevel.Warning, $"{command} - {message}");
       }
     }
+    public static (string graphic, int hue) ParseGraphicAndHue(string value)
+    {
+      if (string.IsNullOrWhiteSpace(value))
+        return (string.Empty, -1);
 
+      var parts = value.Split(new string[] { " " }, StringSplitOptions.RemoveEmptyEntries);
+
+      var graphic = parts[0];
+      var hue = parts.Length > 1 && int.TryParse(parts[1], out var h) ? h : -1;
+
+      return (graphic, hue);
+    }
     public static void SendMessage(string message, bool quiet)
     {
       if (!quiet)

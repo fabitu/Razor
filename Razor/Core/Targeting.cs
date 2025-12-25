@@ -338,7 +338,7 @@ namespace Assistant
         return;
       }
 
-      _lastBeneTarget = _lastHarmTarget = _lastGroundTarget = _lastTarget = new TargetInfo();
+      _lastBeneTarget = _lastHarmTarget = _lastGroundTarget = new TargetInfo();
       _lastTarget.Flags = 0;
       _lastTarget.Gfx = gfxid;
       _lastTarget.Serial = serial;
@@ -346,6 +346,9 @@ namespace Assistant
       _lastTarget.X = p.X;
       _lastTarget.Y = p.Y;
       _lastTarget.Z = p.Z;
+
+      if (_lastGroundTarget.Serial != World.Player.Serial)
+        _lastTarget = _lastGroundTarget;
 
       _lastTargetWasSet = true;
 
@@ -652,9 +655,11 @@ namespace Assistant
     public static void SetLastTargetTo(Mobile m, byte flagType)
     {
       TargetInfo targ = new TargetInfo();
-      _lastGroundTarget = _lastTarget = targ;
+      _lastGroundTarget =  targ;
+      if (targ.Serial != World.Player.Serial)
+        _lastTarget = targ;
 
-      if ((_hasTarget && _curFlags == 1) || flagType == 1)
+        if ((_hasTarget && _curFlags == 1) || flagType == 1)
         _lastHarmTarget = targ;
       else if ((_hasTarget && _curFlags == 2) || flagType == 2)
         _lastBeneTarget = targ;
@@ -975,7 +980,10 @@ namespace Assistant
       else if (_hasTarget)
       {
         info.TargID = _currentID;
-        _lastGroundTarget = _lastTarget = info;
+        _lastGroundTarget = info;
+        if (info.Serial != World.Player.Serial)
+          _lastTarget = info;
+       
         Client.Instance.SendToServer(new TargetResponse(info));
       }
 

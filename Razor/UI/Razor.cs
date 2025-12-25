@@ -8250,10 +8250,12 @@ namespace Assistant
     }
     private void copyPosition_Click(object sender, EventArgs e)
     {
-      var text = $@"while not insysmsg 'Você chegou ao destino!'
-  clearsysmsg
-  walkto {World.Player.Position.X} {World.Player.Position.Y} {World.Player.Position.Z} 500
-endwhile";
+      //      var text = $@"while not insysmsg 'Você chegou ao destino!'
+      //  clearsysmsg
+      //  walkto {World.Player.Position.X} {World.Player.Position.Y} {World.Player.Position.Z} 500
+      //endwhile";
+      var text = $"walkto {World.Player.Position.X} {World.Player.Position.Y} {World.Player.Position.Z} 500";
+
 
       Clipboard.SetText(text);
     }
@@ -8270,6 +8272,6 @@ endwhile";
         sb.AppendLine($"{mobile.Serial},{mobile.Name}");
       }
       Clipboard.SetText($"{sb}");
-    }       
+    }
   }
 }

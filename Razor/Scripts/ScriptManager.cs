@@ -884,6 +884,13 @@ namespace Assistant.Scripts
         "call 'script'");
       descriptionCommands.Add("call", tooltip);
 
+      tooltip = new ToolTipDescriptions("usetypes",
+        new[] { "Usage: usetypes (id:grafic hue;0x001 0x000|layer:[bank|backpack|inrange]|useall:true)" },
+        "N/A",
+        "This command will use (double-click) an item type either provided by the name or the graphic ID. By Layer Bank use in bank , backpack use in backpack, inrange items within range (2 tiles) will only be considered ",
+        "usetypes (id:grafic hue;0x001 0x000|layer:[bank|backpack|inrange]|useall:true)");
+      descriptionCommands.Add("usetypes", tooltip);
+
       #endregion
 
       if (!Config.GetBool("DisableScriptTooltips"))

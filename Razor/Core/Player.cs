@@ -1047,7 +1047,14 @@ namespace Assistant
           DragDropManager.DragDrop(free, World.Player, free.Layer, true);
 
         if (s.IsItem)
+        {
           World.Player._lastObj = s;
+          return true;
+        }
+        if (s.IsMobile)
+        {
+          return true;
+        }
       }
 
       return false;

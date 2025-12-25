@@ -47,6 +47,18 @@ namespace Assistant.Scripts
         throw new RunTimeError("Usage: target (serial) OR target (closest/random/next/prev [noto] [type]");
       }
 
+      if (vars[0].AsString(false).Equals("self"))
+      {
+        var mobile = World.FindMobile(World.Player.Serial);
+
+        if (mobile != null)
+        {
+          Targeting.Target(mobile);
+        }
+
+        return true;
+      }
+
       switch (vars[0].AsString())
       {
         case "close":
@@ -81,7 +93,6 @@ namespace Assistant.Scripts
           Targeting.OnClearQueue();
 
           break;
-
         default:
           Serial serial = vars[0].AsSerial();
 
@@ -242,7 +253,8 @@ namespace Assistant.Scripts
     }
 
     private static bool WaitForTarget(string command, Variable[] vars, bool quiet, bool force)
-    {
+    {  
+
       if (Targeting.HasTarget)
       {
         Interpreter.ClearTimeout();
@@ -261,7 +273,7 @@ namespace Assistant.Scripts
           throw new RunTimeError("Invalid timeout value");
 
         uint timeout = uint.Parse(raw.Substring(0, i));
-        timeout = CommandHelper.SetTimeOut(raw, i, timeout);        
+        timeout = CommandHelper.SetTimeOut(raw, i, timeout);
       }
 
       Interpreter.Timeout(vars.Length > 0 ? vars[0].AsUInt() : 30000, () => { return true; });

@@ -21,6 +21,7 @@ using Assistant.Scripts.Engine;
 using Assistant.Scripts.Helpers;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Ultima;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
 
@@ -87,6 +88,8 @@ namespace Assistant.Scripts
       Interpreter.RegisterExpressionHandler("diffstam", DiffStam);
       Interpreter.RegisterExpressionHandler("diffmana", DiffMana);
 
+      Interpreter.RegisterExpressionHandler("increment", Increment);
+
       Interpreter.RegisterExpressionHandler("name", Name);
       Interpreter.RegisterExpressionHandler("paralyzed", Paralyzed);
       Interpreter.RegisterExpressionHandler("invuln", Invulnerable);
@@ -103,6 +106,17 @@ namespace Assistant.Scripts
 
       Interpreter.RegisterExpressionHandler("timer", TimerValue);
       Interpreter.RegisterExpressionHandler("timerexists", TimerExists);
+
+
+    }
+
+    private static int Increment(string expression, Variable[] args, bool quiet, bool force)
+    {
+      if (args.Length != 1)
+        throw new RunTimeError("Usage: Increment ('value [1]')");
+
+      var result = args[0].AsInt() + 1;      
+      return result;
     }
 
     private static int TimerValue(string expression, Variable[] args, bool quiet, bool force)
@@ -428,6 +442,7 @@ namespace Assistant.Scripts
     private static bool InSysMessage(string expression, Variable[] vars, bool quiet, bool force)
     {
       bool remove = false;
+      bool debug = false;
       if (vars.Length == 0)
       {
         throw new RunTimeError("Usage: insysmsg ('text')");
@@ -436,10 +451,14 @@ namespace Assistant.Scripts
       {
         remove = vars[1].AsBool();
       }
+      if (vars.Length > 2)
+      {
+        debug = vars[2].AsBool();
+      }
 
       string text = vars[0].AsString();
 
-      return SystemMessages.Exists(text, remove);
+      return SystemMessages.Exists(expression, text, remove, debug);
     }
 
     private static int Mana(string expression, Variable[] vars, bool quiet, bool force)

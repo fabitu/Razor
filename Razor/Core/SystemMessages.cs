@@ -16,8 +16,10 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endregion
 
+using Assistant.Scripts.Engine;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Assistant.Core
 {
@@ -82,11 +84,15 @@ namespace Assistant.Core
       }
     }
 
-    public static bool Exists(string text, bool remove = false)
+    public static bool Exists(string callerName, string text, bool remove = false, bool debug = false)
     {
       if (string.IsNullOrEmpty(text))
       {
         return false;
+      }
+      if (text.Contains("{{"))
+      {
+        text = new Variable(text).AsString();
       }
       var _text = text.Split(new string[] { "|" }, StringSplitOptions.RemoveEmptyEntries);
       for (int i = Messages.Count - 1; i >= 0; i--)
@@ -95,6 +101,10 @@ namespace Assistant.Core
         {
           if (Messages[i].IndexOf(_text[j], StringComparison.OrdinalIgnoreCase) != -1)
           {
+            if (debug)
+            {
+              World.Player.SendMessage(22, $"{DateTime.Now.ToString("HH:mm:ss.fff")} - {callerName} - remove:{remove} - encontrou: {Messages[i]}");
+            }
             if (remove)
             {
               Messages.RemoveRange(0, i + 1);
@@ -102,6 +112,10 @@ namespace Assistant.Core
             return true;
           }
         }
+      }
+      if (debug)
+      {
+        World.Player.SendMessage(33, $"{DateTime.Now.ToString("HH:mm:ss.fff")} - {callerName} - remove:{remove} - Não encontrou nada.");
       }
       return false;
     }

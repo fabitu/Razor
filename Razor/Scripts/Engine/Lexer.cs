@@ -386,7 +386,7 @@ namespace Assistant.Scripts.Engine
 
             ReplaceSetVarIndexes(script.Lines, parametersValues);
           }
-
+          
           Lex(node, script.Lines);
 
           break;

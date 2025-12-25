@@ -360,7 +360,7 @@ namespace FastColoredTextBoxNS
 
             RazorCommandRegex =
                 new Regex(
-                    @"\b(attack|cast|dress|undress|dressconfig|target|targettype|targetloc|targetrelloc|dress|drop|waitfortarget|wft|dclick|dclicktype|dclickvar|usetype|useobject|droprelloc|lift|lifttype|waitforgump|gumpresponse|gumpclose|menu|menuresponse|waitformenu|promptresponse|waitforprompt|hotkey|say|msg|overhead|sysmsg|wait|pause|waitforstat|setability|setlasttarget|lasttarget|setvar|unsetvar|skill|useskill|walk|script|useonce|organizer|organize|org|restock|scav|scavenger|potion|clearsysmsg|clearjournal|whisper|yell|guild|alliance|emote|waitforsysmsg|wfsysmsg|clearall|virtue|interrupt|sound|music|classicuo|cuo|rename|getlabel|ignore|unignore|clearignore|cooldown|settimer|removetimer|createtimer|poplist|pushlist|removelist|createlist|clearlist|cleardragdrop|clearhands|sell|pickup|walkto|call|usetype)\b",
+                    @"\b(attack|cast|dress|undress|dressconfig|target|targettype|targetloc|targetrelloc|dress|drop|waitfortarget|wft|dclick|dclicktype|dclickvar|usetype|useobject|droprelloc|lift|lifttype|waitforgump|gumpresponse|gumpclose|menu|menuresponse|waitformenu|promptresponse|waitforprompt|hotkey|say|msg|overhead|sysmsg|wait|pause|waitforstat|setability|setlasttarget|lasttarget|setvar|unsetvar|skill|useskill|walk|script|useonce|organizer|organize|org|restock|scav|scavenger|potion|clearsysmsg|clearjournal|whisper|yell|guild|alliance|emote|waitforsysmsg|wfsysmsg|clearall|virtue|interrupt|sound|music|classicuo|cuo|rename|getlabel|ignore|unignore|clearignore|cooldown|settimer|removetimer|createtimer|poplist|pushlist|removelist|createlist|clearlist|cleardragdrop|clearhands|sell|pickup|walkto|call|usetype|dclicktypes|usetypes)\b",
                     RegexCompiledOption);
 
             RazorLayerRegex =
@@ -370,7 +370,7 @@ namespace FastColoredTextBoxNS
 
             RazorExpressionRegex =
                 new Regex(
-                    @"\b(queued|position|insysmsg|insysmessage|findtype|findbuff|finddebuff|stam|maxstam|hp|maxhp|maxhits|hits|mana|maxmana|str|dex|int|poisoned|hidden|mounted|rhandempty|lhandempty|skill|count|counter|weight|dead|closest|close|rand|random|next|prev|previous|human|humanoid|monster|varexist|varexist|followers|maxfollowers|maxweight|targetexists|diffmana|diffstam|diffhits|diffhp|diffweight|blessed|invul|invuln|warmode|name|paralyzed|itemcount|poplist|atlist|listexists|list|inlist|timer|timerexists|findcount)\b",
+                    @"\b(increment|queued|position|insysmsg|insysmessage|findtype|findbuff|finddebuff|stam|maxstam|hp|maxhp|maxhits|hits|mana|maxmana|str|dex|int|poisoned|hidden|mounted|rhandempty|lhandempty|skill|count|counter|weight|dead|closest|close|rand|random|next|prev|previous|human|humanoid|monster|varexist|varexist|followers|maxfollowers|maxweight|targetexists|diffmana|diffstam|diffhits|diffhp|diffweight|blessed|invul|invuln|warmode|name|paralyzed|itemcount|poplist|atlist|listexists|list|inlist|timer|timerexists|findcount)\b",
                     RegexCompiledOption);
         }
 

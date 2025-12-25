@@ -18,6 +18,7 @@
 
 using Assistant.Core;
 using Assistant.HotKeys;
+using Assistant.Macros;
 using Assistant.Scripts.Engine;
 using Assistant.Scripts.Helpers;
 using Assistant.UI;
@@ -34,6 +35,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
 using Ultima;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Tab;
 
 namespace Assistant.Scripts
@@ -50,6 +52,10 @@ namespace Assistant.Scripts
       Interpreter.RegisterCommandHandler("dress", DressCommand); //DressAction
       Interpreter.RegisterCommandHandler("undress", UnDressCommand); //UndressAction
 
+
+      //
+      Interpreter.RegisterCommandHandler("dclicktypes", DClickTypeCustom); // DoubleClickTypeAction
+      Interpreter.RegisterCommandHandler("usetypes", DClickTypeCustom); // DoubleClickTypeAction
       // Using stuff
       Interpreter.RegisterCommandHandler("dclicktype", DClickType); // DoubleClickTypeAction
       Interpreter.RegisterCommandHandler("dclick", DClick); //DoubleClickAction
@@ -676,7 +682,7 @@ namespace Assistant.Scripts
 
     private static bool SetVar(string command, Variable[] vars, bool quiet, bool force)
     {
-      if (vars.Length < 1 || vars.Length > 2)
+      if (vars.Length < 1 || vars.Length > 3)
       {
         throw new RunTimeError("Usage: setvar ('variable') [serial] [timeout]");
       }
@@ -717,6 +723,29 @@ namespace Assistant.Scripts
         Assistant.Engine.MainWindow.SaveScriptVariables();
 
         return true;
+      }
+      else if (vars.Length == 3) //Executa uma expressão para setar uma variavel
+      {
+        var variable1 = Interpreter.GetVariable(vars[0].AsString(false));
+        var variable2 = Interpreter.GetVariable(vars[2].AsString(true));
+
+        if (variable1 != null && variable2 != null)
+        {
+          var expressionName = vars[1].AsString(false);
+          var handler = Interpreter.GetExpressionHandler(expressionName);
+          if (handler != null)
+          {
+            try
+            {
+              var result = handler.Invoke(expressionName, new Variable[] { new Variable($"{variable2}") }, false, false);
+              Interpreter.SetVariable(vars[0].AsString(false), (string)result, true);
+            }
+            catch
+            {
+              return true;
+            }
+          }
+        }
       }
 
       Interpreter.Timeout(vars.Length == 2 ? vars[1].AsUInt() : 30000, () => { _setVarState = SetVarState.INITIAL_PROMPT; return true; });
@@ -969,6 +998,151 @@ namespace Assistant.Scripts
 
       return true;
     }
+
+    private static void ParseLayer(string parLayer, ref bool inRangeCheck, ref bool backpack, ref bool bank)
+    {
+      if (parLayer.IndexOf("pack", StringComparison.OrdinalIgnoreCase) > 0)
+      {
+        backpack = true;
+      }
+      else if (parLayer.Equals("bank", StringComparison.OrdinalIgnoreCase))
+      {
+        bank = true;
+      }
+      else if (parLayer.IndexOf("range", StringComparison.OrdinalIgnoreCase) > 0)
+      {
+        inRangeCheck = true;
+      }
+    }
+
+    private static bool DClickTypeCustom(string command, Variable[] vars, bool quiet, bool force)
+    {
+      bool inRangeCheck = false;
+      bool backpack = false;
+      bool bank = false;
+      string _searchId = string.Empty;
+      if (vars.Length == 0)
+      {
+        throw new RunTimeError($"Usage: {command} ('(id|itemid|mobileid):grafic hue,0x001 0x000|layer:[bank|backpack|inrange]|useall:true')");
+      }
+      var args = vars[0].AsString(false);
+
+      var parId = CommandHelper.GetNamedParameter(args, "id");
+      var parItemId = CommandHelper.GetNamedParameter(args, "itemid");
+      var parMobileId = CommandHelper.GetNamedParameter(args, "mobileid");
+
+      var hasId = !string.IsNullOrEmpty(parId);
+      var hasItemId = !string.IsNullOrEmpty(parItemId);
+      var hasMobileId = !string.IsNullOrEmpty(parMobileId);
+
+      if (!hasId && !hasItemId && !hasMobileId)
+      {
+        throw new RunTimeError(
+            $"Usage: {command} ('itemid:graphic hue;0x001 0x000|layer:[bank|backpack|inrange]|useall:true')"
+        );
+      }
+
+      _searchId = hasId
+          ? parId
+          : hasItemId
+              ? parItemId
+              : parMobileId;
+
+
+      var parIdList = new Variable(_searchId).AsStringList(true, ",");
+      var parLayer = CommandHelper.GetNamedParameter(vars[0].AsString(false), "layer");
+      bool result = bool.TryParse(CommandHelper.GetNamedParameter(vars[0].AsString(false), "useall"), out var parsed);
+      var parUseAll = result && parsed;
+
+      ParseLayer(parLayer, ref inRangeCheck, ref backpack, ref bank);
+
+      foreach (var _parId in parIdList)
+      {
+        bool useSerial = false;
+        var (gfxStr, hue) = CommandHelper.ParseGraphicAndHue(_parId);
+        Serial gfx = Utility.ToUInt16(gfxStr, 0);
+        Item item = null;
+        List<Item> items = new List<Item>();
+        List<Mobile> mobiles = new List<Mobile>();
+        bool useSucess = false;
+
+        if (vars.Length == 1)
+        {
+          if (vars[0].AsSerial() != Serial.MinusOne)
+          {
+            item = World.FindItem(vars[0].AsSerial());
+            if (item != null)
+              useSerial = true;
+          }
+        }
+
+        if (useSerial)
+        {
+          useSucess = PlayerData.DoubleClick(item.Serial);
+        }
+        else
+        {
+          // No graphic id, maybe searching by name?
+          if (gfx == 0)
+          {
+            if (hasItemId)
+              items = CommandHelper.GetItemsByName(gfxStr, backpack, bank, inRangeCheck, hue);
+            else if (hasMobileId)
+              mobiles = CommandHelper.GetMobilesByName(gfxStr, inRangeCheck);
+            else
+            {
+              items = CommandHelper.GetItemsByName(gfxStr, backpack, bank, inRangeCheck, hue);
+              if (items.Any()) // no item found, search mobile by name
+              {
+                mobiles = CommandHelper.GetMobilesByName(gfxStr, inRangeCheck);
+              }
+            }
+          }
+          else // Provided graphic id for type, check backpack first (same behavior as DoubleClickAction in macros
+          {
+            ushort id = Utility.ToUInt16(gfxStr, 0);
+            if (hasItemId)
+            {
+              items = CommandHelper.GetItemsById(id, backpack, bank, inRangeCheck, hue);
+            }
+            else if (hasMobileId)
+            {
+              mobiles = CommandHelper.GetMobilesById(id, inRangeCheck);
+            }
+            else
+            {
+              items = CommandHelper.GetItemsById(id, backpack, bank, inRangeCheck, hue);
+
+              // Still no item? Mobile check!
+              if (items.Any())
+              {
+                mobiles = CommandHelper.GetMobilesById(id, inRangeCheck);
+              }
+            }
+          }
+
+          if (items.Any())
+          {
+            useSucess = PlayerData.DoubleClick(items[Utility.Random(items.Count)].Serial);
+          }
+          else if (mobiles.Any())
+          {
+            useSucess = PlayerData.DoubleClick(mobiles[Utility.Random(mobiles.Count)].Serial);
+          }
+          else
+          {
+            CommandHelper.SendWarning(command, $"Item or mobile type '{gfxStr}' not found", quiet);
+          }
+        }
+
+        if ((useSucess && !parUseAll) || (!parUseAll))
+          break;
+      }
+
+      return true;
+    }
+
+
 
     private static bool DClickType(string command, Variable[] vars, bool quiet, bool force)
     {
@@ -1869,6 +2043,10 @@ namespace Assistant.Scripts
       {
         World.Player.SendMessage(Utility.ToInt32(vars[1].AsString(), 0), sysMessage);
       }
+      else if (vars.Length == 3)
+      {
+        World.Player.SendMessage(MsgLevel.Info, sysMessage);
+      }
 
       return true;
     }
@@ -2163,18 +2341,48 @@ namespace Assistant.Scripts
 
     private static bool WaitForSysMsg(string command, Variable[] vars, bool quiet, bool force)
     {
+      bool remove = false;
+      bool debug = false;
+      bool hasMaxTimeOut = false;
+      uint maxTimeOut = 0;
+      uint timeout = 0;
       if (vars.Length < 1)
       {
         throw new RunTimeError("Usage: waitforsysmsg 'message to wait for' [timeout]");
       }
+      if (vars.Length > 1)
+      {
+        timeout = vars[1].AsUInt();
+      }
+      if (vars.Length > 2)
+      {
+        remove = vars[2].AsBool();
+      }
+      if (vars.Length > 3)
+      {
+        debug = vars[3].AsBool();
+      }
+      if (vars.Length > 4)
+      {
+        maxTimeOut = vars[4].AsUInt();
+        hasMaxTimeOut = true;
+      }
 
-      if (SystemMessages.Exists(vars[0].AsString()))
+      if (SystemMessages.Exists(command, vars[0].AsString(), remove, debug))
       {
         Interpreter.ClearTimeout();
         return true;
       }
 
-      Interpreter.Timeout(vars.Length > 1 ? vars[1].AsUInt() : 30000, () => { return true; });
+      if (hasMaxTimeOut)
+      {
+        Interpreter.Timeout(vars.Length > 1 ? maxTimeOut : 30000, () => { return true; });
+        return true;
+      }
+      else
+      {
+        Interpreter.Timeout(vars.Length > 1 ? timeout : 30000, () => { return true; });
+      }
 
       return false;
     }
