@@ -22,6 +22,8 @@ using Assistant.Scripts.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using System.Security.Policy;
 using Ultima;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
 
@@ -64,6 +66,7 @@ namespace Assistant.Scripts
       Interpreter.RegisterExpressionHandler("insysmsg", InSysMessage);
       Interpreter.RegisterExpressionHandler("insysmessage", InSysMessage);
 
+      Interpreter.RegisterExpressionHandler("findcontainer", FindContainer);
       Interpreter.RegisterExpressionHandler("findtype", FindType);
       Interpreter.RegisterExpressionHandler("findcount", FindCount);
 
@@ -115,7 +118,7 @@ namespace Assistant.Scripts
       if (args.Length != 1)
         throw new RunTimeError("Usage: Increment ('value [1]')");
 
-      var result = args[0].AsInt() + 1;      
+      var result = args[0].AsInt() + 1;
       return result;
     }
 
@@ -271,6 +274,65 @@ namespace Assistant.Scripts
       }
 
       return false;
+    }
+
+    private static uint FindContainer(string expression, Variable[] vars, bool quiet, bool force)
+    {
+      if (vars.Length == 0)
+      {
+        throw new RunTimeError($"Usage: {expression} ('grafric hue') ([backpack/bank/cointainerSerial) [desc] [ignorefull] [amount]");
+      }
+      var desc = false;
+      var ignorefull = false;
+      int amount = 255;
+
+      bool hasHue = false;
+      var (gfxStr, hue) = CommandHelper.ParseGraphicAndHue(vars[0].AsString());
+      if (hue != -1)
+        hasHue = true;
+
+      ushort gfx = Utility.ToUInt16(gfxStr, 0);
+
+      var fromBagSerial = vars[1].AsString().Equals("bank", StringComparison.OrdinalIgnoreCase) ?
+      World.Player.Bank.Serial.Value : vars[1].AsSerial();
+
+      fromBagSerial = vars[1].AsString().Equals("pack", StringComparison.OrdinalIgnoreCase) ?
+        World.Player.Backpack.Serial.Value : vars[1].AsSerial();
+
+      if (vars.Length > 2)
+        desc = vars[2].AsBool();
+      if (vars.Length > 3)
+        ignorefull = vars[3].AsBool();
+      if (vars.Length > 4)
+        amount = vars[4].AsInt();
+
+      var fromBag = World.FindItem(fromBagSerial);
+      List<Item> itens = new List<Item>();  
+
+      if (fromBag != null)
+      {
+        if (hasHue)
+          itens = fromBag.Contains.Where(x => x.ItemID == (ItemID)gfx && (int)x.Hue == hue).ToList();
+        else
+          itens = fromBag.Contains.Where(x => x.ItemID == (ItemID)gfx).ToList();
+
+        if (ignorefull)
+          itens = itens.Where(x => x.Contains.Count() < amount).ToList();
+
+        if (desc)
+          itens = itens.OrderByDescending(x => x.Contains.Count()).ToList();
+        else
+          itens = itens.OrderBy(x => x.Contains.Count()).ToList();
+
+        if (itens.Any())
+          return itens[0].Serial;
+      }
+      else
+      {
+        World.Player.SendMessage("From bag not found or isEmpty!");
+      }
+
+      return Serial.Zero;
     }
 
     private static uint FindType(string expression, Variable[] vars, bool quiet, bool force)

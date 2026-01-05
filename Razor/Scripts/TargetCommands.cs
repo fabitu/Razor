@@ -20,6 +20,7 @@ using Assistant.Scripts.Engine;
 using Assistant.Scripts.Helpers;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
 using static Ultima.FrameEdit;
 
@@ -42,25 +43,38 @@ namespace Assistant.Scripts
 
     private static bool Target(string command, Variable[] vars, bool quiet, bool force)
     {
+      Mobile _mobile;
       if (vars.Length < 1)
       {
         throw new RunTimeError("Usage: target (serial) OR target (closest/random/next/prev [noto] [type]");
       }
 
-      if (vars[0].AsString(false).Equals("self"))
-      {
-        var mobile = World.FindMobile(World.Player.Serial);
-
-        if (mobile != null)
-        {
-          Targeting.Target(mobile);
-        }
-
-        return true;
-      }
-
       switch (vars[0].AsString())
       {
+        case "self":
+          _mobile = World.FindMobile(World.Player.Serial);
+
+          if (_mobile != null)
+          {
+            Targeting.Target(_mobile);
+          }
+
+          break;
+        case "last":
+          if (Targeting.HasTarget && Targeting.LastTargetInfo != null)
+          {
+            _mobile = World.FindMobile(Targeting.LastTargetInfo.Serial);
+
+            if (_mobile != null)
+            {
+              Targeting.Target(_mobile);
+            }
+          }
+          else
+          {
+            // Targeting.
+          }
+          break;
         case "close":
         case "closest":
           CommandHelper.FindTarget(vars, true);
@@ -106,11 +120,11 @@ namespace Assistant.Scripts
               return true;
             }
 
-            Mobile mobile = World.FindMobile(serial);
+            _mobile = World.FindMobile(serial);
 
-            if (mobile != null)
+            if (_mobile != null)
             {
-              Targeting.Target(mobile);
+              Targeting.Target(_mobile);
             }
           }
 
@@ -253,13 +267,15 @@ namespace Assistant.Scripts
     }
 
     private static bool WaitForTarget(string command, Variable[] vars, bool quiet, bool force)
-    {  
-
+    {
+      var result = false;
+      uint timeout = 30000;
       if (Targeting.HasTarget)
       {
         Interpreter.ClearTimeout();
         return true;
       }
+
       if (vars.Length > 0)
       {
         string raw = vars[0].AsString().Trim().ToLowerInvariant();
@@ -272,13 +288,28 @@ namespace Assistant.Scripts
         if (i == 0)
           throw new RunTimeError("Invalid timeout value");
 
-        uint timeout = uint.Parse(raw.Substring(0, i));
+        timeout = uint.Parse(raw.Substring(0, i));
         timeout = CommandHelper.SetTimeOut(raw, i, timeout);
+
+        if (vars.Length > 1)
+        {
+          var ignoreWait = vars[1].AsBool();
+          result = ignoreWait;
+          if (ignoreWait)
+          {
+            if (vars.Length > 2)
+            {
+              var message = vars[2].AsString();
+              World.Player.SendMessage(MsgLevel.Info, message);
+            }
+          }
+        }
       }
 
-      Interpreter.Timeout(vars.Length > 0 ? vars[0].AsUInt() : 30000, () => { return true; });
+      Interpreter.Timeout(vars.Length > 0 ? timeout : 30000, () => { return true; });
 
-      return false;
+
+      return result;
     }
   }
 }

@@ -79,7 +79,7 @@ namespace Assistant
       ScriptManager.SetControls(scriptEditor, scriptTree, scriptVariables);
       WaypointManager.SetControls(waypointList);
       OverheadManager.SetControls(cliLocOverheadView);
-      TextFilterManager.SetControls(textFilterList);
+      TextFilterManager.SetControls(textFilterList);      
       ScriptManager.SetEditor(scriptEditor);
 
       scriptDocMap.Target = scriptEditor;

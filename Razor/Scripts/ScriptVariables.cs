@@ -23,77 +23,77 @@ using Assistant.Scripts.Engine;
 
 namespace Assistant.Scripts
 {
-    public class ScriptVariables
+  public class ScriptVariables
+  {
+    private static Dictionary<string, Serial> _variables = new Dictionary<string, Serial>();
+    public static IEnumerable<KeyValuePair<string, Serial>> Variables => _variables;
+
+    public static void Save(XmlTextWriter xml)
     {
-        private static Dictionary<string, Serial> _variables = new Dictionary<string, Serial>();
-        public static IEnumerable<KeyValuePair<string, Serial>> Variables => _variables;
-
-        public static void Save(XmlTextWriter xml)
-        {
-            foreach (KeyValuePair<string, Serial> kv in _variables)
-            {
-                xml.WriteStartElement("scriptvariable");
-                xml.WriteAttributeString("serial", kv.Value.ToString());
-                xml.WriteAttributeString("name", kv.Key);
-                xml.WriteEndElement();
-            }
-        }
-
-        public static void Load(XmlElement node)
-        {
-            ClearAll();
-
-            try
-            {
-                foreach (XmlElement el in node.GetElementsByTagName("scriptvariable"))
-                {
-                    string name = el.GetAttribute("name");
-                    Serial serial = Serial.Parse(el.GetAttribute("serial"));
-
-                    RegisterVariable(name, serial);
-                }
-            }
-            catch
-            {
-                // ignored
-            }
-        }
-
-        public static void RegisterVariable(string name, Serial serial)
-        {
-            name = name.Trim();
-
-            _variables[name] = serial;
-            Interpreter.SetAlias(name, serial);
-        }
-
-        public static void UnregisterVariable(string name)
-        {
-            name = name.Trim();
-            Interpreter.ClearAlias(name);
-            _variables.Remove(name);
-        }
-
-        public static void ClearAll()
-        {
-            foreach (string key in new List<string>(_variables.Keys))
-            {
-                UnregisterVariable(key);
-            }
-
-            _variables.Clear();
-        }
-
-        public static Serial GetVariable(string name)
-        {
-            name = name.Trim();
-
-            if (_variables.TryGetValue(name, out var val))
-            {
-                return val;
-            }
-
-            return Serial.MinusOne;
-        }
+      foreach (KeyValuePair<string, Serial> kv in _variables)
+      {
+        xml.WriteStartElement("scriptvariable");
+        xml.WriteAttributeString("serial", kv.Value.ToString());
+        xml.WriteAttributeString("name", kv.Key);
+        xml.WriteEndElement();
+      }
     }
+
+    public static void Load(XmlElement node)
+    {
+      ClearAll();
+
+      try
+      {
+        foreach (XmlElement el in node.GetElementsByTagName("scriptvariable"))
+        {
+          string name = el.GetAttribute("name");
+          Serial serial = Serial.Parse(el.GetAttribute("serial"));
+
+          RegisterVariable(name, serial);
+        }
+      }
+      catch
+      {
+        // ignored
+      }
+    }
+
+    public static void RegisterVariable(string name, Serial serial, bool global = true)
+    {
+      name = name.Trim();
+
+      _variables[name] = serial;
+      Interpreter.SetAlias(name, serial, global);
+    }
+
+    public static void UnregisterVariable(string name)
+    {
+      name = name.Trim();
+      Interpreter.ClearAlias(name);
+      _variables.Remove(name);
+    }
+
+    public static void ClearAll()
+    {
+      foreach (string key in new List<string>(_variables.Keys))
+      {
+        UnregisterVariable(key);
+      }
+
+      _variables.Clear();
+    }
+
+    public static Serial GetVariable(string name)
+    {
+      name = name.Trim();
+
+      if (_variables.TryGetValue(name, out var val))
+      {
+        return val;
+      }
+
+      return Serial.MinusOne;
+    }
+  }
 }

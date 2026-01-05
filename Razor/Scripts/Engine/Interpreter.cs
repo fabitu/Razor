@@ -182,19 +182,39 @@ namespace Assistant.Scripts.Engine
 
     public static Variable GetVariable(string name)
     {
-      var scope = _currentScope;
-      Variable result = null;
-
-      while (scope != null)
+      var result = ParserPlayerVar(name);
+      if (result == null)
       {
-        result = scope.GetVariable(name);
-        if (result != null)
-          return result;
+        var scope = _currentScope;
 
-        scope = scope.Parent;
+        while (scope != null)
+        {
+          result = scope.GetVariable(name);
+          if (result != null)
+            return result;
+
+          scope = scope.Parent;
+        }
       }
 
       return result;
+    }
+
+    private static Variable ParserPlayerVar(string name)
+    {
+      if (name.Equals("x", StringComparison.OrdinalIgnoreCase))
+      {
+        return new Variable(World.Player.Position.X.ToString());
+      }
+      else if (name.Equals("y", StringComparison.OrdinalIgnoreCase))
+      {
+        return new Variable(World.Player.Position.Y.ToString());
+      }
+      else if (name.Equals("z", StringComparison.OrdinalIgnoreCase))
+      {
+        return new Variable(World.Player.Position.Z.ToString());
+      }
+      return null;
     }
 
     public static void ClearVariable(string name)
@@ -218,9 +238,9 @@ namespace Assistant.Scripts.Engine
       return arg?.AsUInt() ?? uint.MaxValue;
     }
 
-    public static void SetAlias(string alias, uint serial)
+    public static void SetAlias(string alias, uint serial, bool global = true)
     {
-      SetVariable(alias, serial.ToString(), true);
+      SetVariable(alias, serial.ToString(), global);
     }
 
     public static void ClearAlias(string alias)
@@ -430,7 +450,7 @@ namespace Assistant.Scripts.Engine
           return true;
       }
       else if (_executionState == ExecutionState.TIMING_OUT)
-      {        
+      {
         if (_pauseTimeout < DateTime.UtcNow.Ticks)
         {
           if (_timeoutCallback != null)
@@ -493,7 +513,7 @@ namespace Assistant.Scripts.Engine
 
       _pauseTimeout = DateTime.UtcNow.Ticks + (duration * 10000);
       // Convert ticks to DateTime
-      DateTime dateTime = new DateTime(_pauseTimeout);      
+      DateTime dateTime = new DateTime(_pauseTimeout);
       _executionState = ExecutionState.TIMING_OUT;
       _timeoutCallback = callback;
     }

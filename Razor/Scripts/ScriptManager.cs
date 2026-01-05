@@ -891,6 +891,13 @@ namespace Assistant.Scripts
         "usetypes (id:grafic hue;0x001 0x000|layer:[bank|backpack|inrange]|useall:true)");
       descriptionCommands.Add("usetypes", tooltip);
 
+      tooltip = new ToolTipDescriptions("writeto",
+        new[] { "Usage: exportToFile (file:filePath|text:walkto|clear:true)" },
+        "N/A",
+        "Export text to FilePath ",
+        @"writeto (file:c:\...|text: walkto|clear:[true/false]");
+      descriptionCommands.Add("writeto", tooltip);
+
       #endregion
 
       if (!Config.GetBool("DisableScriptTooltips"))

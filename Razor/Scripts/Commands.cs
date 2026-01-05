@@ -22,10 +22,12 @@ using Assistant.Macros;
 using Assistant.Scripts.Engine;
 using Assistant.Scripts.Helpers;
 using Assistant.UI;
+using CUO_APINetPipes;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.ConstrainedExecution;
@@ -52,6 +54,7 @@ namespace Assistant.Scripts
       Interpreter.RegisterCommandHandler("dress", DressCommand); //DressAction
       Interpreter.RegisterCommandHandler("undress", UnDressCommand); //UndressAction
 
+      Interpreter.RegisterCommandHandler("writeto", WriteTo); // Escreve no Arquivo
 
       //
       Interpreter.RegisterCommandHandler("dclicktypes", DClickTypeCustom); // DoubleClickTypeAction
@@ -717,7 +720,7 @@ namespace Assistant.Scripts
           CommandHelper.SendMessage($"'{name}' not found, creating new variable", quiet);
         }
 
-        ScriptVariables.RegisterVariable(name, serial);
+        ScriptVariables.RegisterVariable(name, serial, false);
         CommandHelper.SendMessage($"'{name}' script variable updated to '{serial}'", quiet);
 
         Assistant.Engine.MainWindow.SaveScriptVariables();
@@ -999,20 +1002,25 @@ namespace Assistant.Scripts
       return true;
     }
 
-    private static void ParseLayer(string parLayer, ref bool inRangeCheck, ref bool backpack, ref bool bank)
+
+
+    public static bool WriteTo(string command, Variable[] vars, bool quiet, bool force)
     {
-      if (parLayer.IndexOf("pack", StringComparison.OrdinalIgnoreCase) > 0)
-      {
-        backpack = true;
-      }
-      else if (parLayer.Equals("bank", StringComparison.OrdinalIgnoreCase))
-      {
-        bank = true;
-      }
-      else if (parLayer.IndexOf("range", StringComparison.OrdinalIgnoreCase) > 0)
-      {
-        inRangeCheck = true;
-      }
+      if (vars.Length < 1)
+        throw new RunTimeError($@"Usage: {command} ('(file:c:\... hue|text:{{x}},y |clear:true|newline:true)");
+
+      var args = vars[0].AsString(true);
+
+      var parFilePath = CommandHelper.GetNamedParameter(args, "file");
+      var parText = CommandHelper.GetNamedParameter(vars[0].AsString(false), "text");
+      var parClear = CommandHelper.GetNamedParameter(args, "clear") ?? "false";
+      var parNewLine = CommandHelper.GetNamedParameter(args, "newline") ?? "true";
+      bool clear = bool.TryParse(parClear, out var b) && b;
+      bool newLine = bool.TryParse(parNewLine, out var c) && c;
+
+      CommandHelper.WriteToFile(parFilePath, parText, clear, newLine);
+
+      return true;
     }
 
     private static bool DClickTypeCustom(string command, Variable[] vars, bool quiet, bool force)
@@ -1054,7 +1062,7 @@ namespace Assistant.Scripts
       bool result = bool.TryParse(CommandHelper.GetNamedParameter(vars[0].AsString(false), "useall"), out var parsed);
       var parUseAll = result && parsed;
 
-      ParseLayer(parLayer, ref inRangeCheck, ref backpack, ref bank);
+      CommandHelper.ParseLayer(parLayer, ref inRangeCheck, ref backpack, ref bank);
 
       foreach (var _parId in parIdList)
       {
@@ -1114,7 +1122,7 @@ namespace Assistant.Scripts
               items = CommandHelper.GetItemsById(id, backpack, bank, inRangeCheck, hue);
 
               // Still no item? Mobile check!
-              if (items.Any())
+              if (!items.Any())
               {
                 mobiles = CommandHelper.GetMobilesById(id, inRangeCheck);
               }
@@ -1135,7 +1143,7 @@ namespace Assistant.Scripts
           }
         }
 
-        if ((useSucess && !parUseAll) || (!parUseAll))
+        if ((useSucess && !parUseAll))
           break;
       }
 
@@ -1295,7 +1303,11 @@ namespace Assistant.Scripts
       {
         throw new RunTimeError("Usage: PickUp (serial) (fromContainer) (ToContainer) [count,default=1] [delay,default= 100ms]");
       }
-      string gfxStr = vars[0].AsString();
+      bool hasHue = false;
+      var (gfxStr, hue) = CommandHelper.ParseGraphicAndHue(vars[0].AsString());
+      if (hue != -1)
+        hasHue = true;
+
       ushort gfx = Utility.ToUInt16(gfxStr, 0);
       var fromBagSerial = vars[1].AsString().Equals("bank", StringComparison.OrdinalIgnoreCase) ?
         World.Player.Bank.Serial.Value : vars[1].AsSerial();
@@ -1325,19 +1337,22 @@ namespace Assistant.Scripts
         return false;
       }
 
+      List<Item> itens = new List<Item>();
+      if (hasHue)
+        itens = fromBag.Contains.Where(x => x.ItemID == (ItemID)gfx && (int)x.Hue == hue).ToList();
+      else
+        itens = fromBag.Contains.Where(x => x.ItemID == (ItemID)gfx).ToList(); 
 
-      var itens = fromBag.Contains.Where(x => x.ItemID == (ItemID)gfx).ToList();
       if (itens.Count == 0)
         return true;
 
       int amount = count == -1 ? itens[0].Amount : Math.Min(count, itens[0].Amount);
+      Interpreter.SetVariable("picked", $"{itens[0].Serial}", true);
       DragDropManager.DragDrop(itens[0], amount, toBag);
       if (debug)
         World.Player.SendMessage("Item Moved");
       System.Threading.Thread.Sleep(delay);
       fromBag = World.FindItem(fromBagSerial);
-
-
 
       return true;
     }
@@ -1361,6 +1376,8 @@ namespace Assistant.Scripts
 
       return true;
     }
+
+
     public static bool WalkTo(string command, Variable[] vars, bool quiet, bool force)
     {
       if (vars.Length < 2)
@@ -1833,8 +1850,6 @@ namespace Assistant.Scripts
       return false;
     }
 
-
-
     private static bool UseSkill(string command, Variable[] vars, bool quiet, bool force)
     {
       if (vars.Length == 0)
@@ -1907,38 +1922,6 @@ namespace Assistant.Scripts
       Interpreter.Pause(timeout);
 
       return true;
-    }
-
-
-
-    public static string ParseMessageWithDate(string message)
-    {
-      if (string.IsNullOrEmpty(message))
-        return message;
-
-      // [d:FORMAT] ou [d:]
-      var match = Regex.Match(message, @"\[d:(?<format>[^\]]*)\]");
-      if (!match.Success)
-        return message;
-
-      var format = match.Groups["format"].Value;
-      if (string.IsNullOrWhiteSpace(format))
-        format = "HH:mm:ss";
-
-      // remove o token e injeta a data (interpolação)
-      var cleaned = Regex.Replace(message, @"\[d:[^\]]*\]", string.Empty);
-      string dateText;
-      try
-      {
-        dateText = DateTime.Now.ToString(format);
-      }
-      catch
-      {
-        dateText = DateTime.Now.ToString(format);
-      }
-
-
-      return $"{dateText} - {cleaned}";
     }
 
     private static bool Attack(string command, Variable[] vars, bool quiet, bool force)

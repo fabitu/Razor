@@ -20,7 +20,9 @@ using Assistant.Filters;
 using Assistant.Scripts.Engine;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.Remoting.Messaging;
 using System.Text;
 using System.Text.RegularExpressions;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.Rebar;
@@ -81,6 +83,28 @@ namespace Assistant.Scripts.Helpers
       }
 
       return items.Count();
+    }
+
+    public static List<Item> FindItensInBackPack(List<string> parIdList)
+    {
+      List<Item> items = new List<Item>();
+      foreach (var _parId in parIdList)
+      {
+        var (gfxStr, hue) = CommandHelper.ParseGraphicAndHue(_parId);
+        Serial gfx = Utility.ToUInt16(gfxStr, 0);
+
+        // No graphic id, maybe searching by name?
+        if (gfx == 0)
+        {
+          items = CommandHelper.GetItemsByName(gfxStr, true, false, false, hue);
+        }
+        else // Provided graphic id for type, check backpack first (same behavior as DoubleClickAction in macros
+        {
+          ushort id = Utility.ToUInt16(gfxStr, 0);
+          items = CommandHelper.GetItemsById(id, true, false, false, hue);
+        }
+      }
+      return items;
     }
 
     public static uint SetTimeOut(string raw, int i, uint timeout)
@@ -168,7 +192,7 @@ namespace Assistant.Scripts.Helpers
     /// <param name="inRange"></param>
     /// <param name="hue"></param>
     /// <returns></returns>
-    public static int GetTotalItemsById(ushort id, bool backpack, bool bank, Serial container, int hue)
+    public static int GetTotalItemsById(ushort id, bool backpack, bool bank, Serial container, int hue,bool notFull = false)
     {
       List<Item> items = new List<Item>();
 
@@ -202,15 +226,17 @@ namespace Assistant.Scripts.Helpers
         {
           var itens = findContainer.Contains.Where(x => x.ItemID == id && !Interpreter.CheckIgnored(x.Serial)).ToList();
           items.AddRange(itens);
-        }
-      }
+        }      }
+
 
       if (hue > -1)
       {
         items.RemoveAll(item => item.Hue != hue);
       }
 
-      return items.Count();
+      
+
+      return items.Sum(x => x.Amount);
     }
     /// <summary>
     /// Common logic for dclicktype and targettype to find items by id
@@ -340,6 +366,103 @@ namespace Assistant.Scripts.Helpers
       return mobiles;
     }
 
+    public static void WriteToFile(string filePath, string text, bool clearFile, bool newLine)
+    {
+      if (string.IsNullOrWhiteSpace(filePath))
+        throw new ArgumentException(nameof(filePath));
+
+      if (text == null)
+        text = string.Empty;
+
+      var directory = Path.GetDirectoryName(filePath);
+      if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+        Directory.CreateDirectory(directory);
+
+      // Garante arquivo existente para o caso de append
+      if (!File.Exists(filePath))
+      {
+        using (File.Create(filePath)) { }
+      }
+
+      if (clearFile)
+      {
+        File.WriteAllText(filePath, newLine ? text + Environment.NewLine : text, Encoding.UTF8);
+        return;
+      }
+
+      if (newLine)
+      {
+        EnsureEndsWithNewLine(filePath);
+        File.AppendAllText(filePath, text, Encoding.UTF8);
+      }
+      else
+      {
+        TrimTrailingNewLines(filePath);
+        File.AppendAllText(filePath, text, Encoding.UTF8);
+      }
+    }
+
+    private static void EnsureEndsWithNewLine(string filePath)
+    {
+      long len;
+      using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.ReadWrite, FileShare.Read))
+      {
+        len = fs.Length;
+        if (len == 0)
+          return;
+
+        fs.Seek(-1, SeekOrigin.End);
+        var last = fs.ReadByte();
+
+        // Se já termina com '\n', ok (tanto \n quanto \r\n terminam com \n)
+        if (last == '\n')
+          return;
+      }
+
+      File.AppendAllText(filePath, Environment.NewLine, Encoding.UTF8);
+    }
+
+    private static void TrimTrailingNewLines(string filePath)
+    {
+      using (var fs = new FileStream(filePath, FileMode.Open, FileAccess.ReadWrite, FileShare.Read))
+      {
+        long len = fs.Length;
+        if (len == 0)
+          return;
+
+        // Remove todos os \n e \r do final
+        while (len > 0)
+        {
+          fs.Seek(len - 1, SeekOrigin.Begin);
+          int b = fs.ReadByte();
+          if (b == '\n' || b == '\r')
+          {
+            len--;
+            continue;
+          }
+          break;
+        }
+
+        if (len != fs.Length)
+          fs.SetLength(len);
+      }
+    }
+    public static void ParseLayer(string parLayer, ref bool inRangeCheck, ref bool backpack, ref bool bank)
+    {
+      if (parLayer.IndexOf("pack", StringComparison.OrdinalIgnoreCase) > 0)
+      {
+        backpack = true;
+      }
+      else if (parLayer.Equals("bank", StringComparison.OrdinalIgnoreCase))
+      {
+        bank = true;
+      }
+      else if (parLayer.IndexOf("range", StringComparison.OrdinalIgnoreCase) > 0)
+      {
+        inRangeCheck = true;
+      }
+    }
+
     public static string GetNamedParameter(string input, string parameterName)
     {
       if (string.IsNullOrWhiteSpace(input) || string.IsNullOrWhiteSpace(parameterName))
@@ -357,10 +480,10 @@ namespace Assistant.Scripts.Helpers
         if (!name.Equals(parameterName, StringComparison.OrdinalIgnoreCase))
           continue;
 
-        return part.Substring(idx + 1).Trim();
+        return part.Substring(idx + 1);
       }
 
-      return null;
+      return string.Empty;
     }
 
     /// <summary>

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Assistant.Scripts.Helpers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -87,8 +88,8 @@ namespace Assistant.Scripts.Engine
     public List<string> AsStringList(bool resolve = true, string caracter = "|")
     {
       var result = new List<string>();
-      if (_value == null)
-        throw new RunTimeError("Cannot convert argument to string");
+      if (string.IsNullOrEmpty(_value))
+        return result;
 
       var rawValues = _value.Split(new string[] { caracter }, StringSplitOptions.RemoveEmptyEntries);
       foreach (var rawValue in rawValues)
@@ -100,6 +101,8 @@ namespace Assistant.Scripts.Engine
             var arg = Interpreter.GetVariable(rawValue);
             if (arg != null)
               result.Add(arg.AsString());
+            else
+              result.Add(rawValue);
           }
           else
           {
@@ -114,7 +117,7 @@ namespace Assistant.Scripts.Engine
       }
 
       return result;
-    }    
+    }
 
     // Treat the argument as a string
     public string AsString(bool resolve = true)
@@ -128,15 +131,14 @@ namespace Assistant.Scripts.Engine
         {
           var arg = Interpreter.GetVariable(_value);
           if (arg != null)
-            return arg.AsString();
+            _value = arg.AsString();
         }
         else
         {
-          var arg = ResolvePipeVars(_value);
-          return arg;
+          _value = ResolvePipeVars(_value);
         }
       }
-
+      _value = CommandHelper.ReplaceStringInterpolations(_value);
       return _value;
     }
 
